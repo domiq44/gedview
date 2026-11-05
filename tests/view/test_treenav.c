@@ -133,14 +133,14 @@ TEST(treenav_recenter_closes_an_open_child_menu) {
     nav_init(&nav);
     treenav_toggle(&nav, &db);
     treenav_move(&nav, &db, PED_CHILD);
-    int menu_was_open = nav.child_menu;
+    int menu_was_open = nav.menu;
 
     // When
     treenav_recenter(&nav, &db, 2);
 
     // Then
     ASSERT_EQ_INT(1, menu_was_open);
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
     ASSERT_EQ_STR("@I2@", nav_current(&nav, &db)->xref);
 }
 
@@ -192,8 +192,8 @@ TEST(treenav_move_child_on_the_root_opens_the_children_list) {
     treenav_move(&nav, &db, PED_CHILD);
 
     // Then
-    ASSERT_EQ_INT(1, nav.child_menu);
-    ASSERT_EQ_INT(0, nav.child_sel);
+    ASSERT_EQ_INT(1, nav.menu);
+    ASSERT_EQ_INT(0, nav.menu_sel);
 }
 
 /* Vérifie qu'aucune liste ne s'ouvre pour une personne centrale sans enfant. */
@@ -210,7 +210,7 @@ TEST(treenav_move_child_on_the_root_without_children_changes_nothing) {
     treenav_move(&nav, &db, PED_CHILD);
 
     // Then
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
     ASSERT_EQ_INT(1, nav.tree_sel);
 }
 
@@ -226,12 +226,12 @@ TEST(treenav_menu_move_stays_within_the_children) {
 
     // When
     treenav_menu_move(&nav, &db, -1);
-    int first = nav.child_sel;
+    int first = nav.menu_sel;
     treenav_menu_move(&nav, &db, 5);
 
     // Then
     ASSERT_EQ_INT(0, first);
-    ASSERT_EQ_INT(1, nav.child_sel);
+    ASSERT_EQ_INT(1, nav.menu_sel);
 }
 
 /* Vérifie que choisir un enfant en fait l'individu courant, ferme la liste et alimente l'historique. */
@@ -250,7 +250,7 @@ TEST(treenav_menu_choose_selects_the_child_and_closes_the_list) {
 
     // Then
     ASSERT_EQ_STR("@I3@", nav_current(&nav, &db)->xref);
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
     ASSERT_EQ_INT(1, nav.tree_sel);
     ASSERT_EQ_INT(1, (int)nav.history_count);
 }
@@ -264,13 +264,13 @@ TEST(treenav_menu_choose_with_an_out_of_range_child_closes_the_list_without_movi
     nav_init(&nav);
     treenav_toggle(&nav, &db);
     treenav_move(&nav, &db, PED_CHILD);
-    nav.child_sel = 9;
+    nav.menu_sel = 9;
 
     // When
     treenav_menu_choose(&nav, &db);
 
     // Then
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
     ASSERT_EQ_STR("@I1@", nav_current(&nav, &db)->xref);
     ASSERT_EQ_INT(0, (int)nav.history_count);
 }
@@ -289,13 +289,162 @@ TEST(treenav_menu_close_keeps_the_current_individual) {
     treenav_menu_close(&nav);
 
     // Then
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
     ASSERT_EQ_STR("@I1@", nav_current(&nav, &db)->xref);
+}
+
+/* Alice (I1, index 0) a une sœur Dora (I6, index 2) et un parent Bob (I2, index 1) ; Zoe (I7, index 3) est
+ * isolée. */
+static const char *SIBLINGS = "0 @I1@ INDI\n1 NAME Alice/ALPHA/\n1 FAMC @F1@\n"
+                              "0 @I2@ INDI\n1 NAME Bob/BRAVO/\n1 FAMS @F1@\n"
+                              "0 @I6@ INDI\n1 NAME Dora/DELTA/\n1 FAMC @F1@\n"
+                              "0 @I7@ INDI\n1 NAME Zoe/ZULU/\n"
+                              "0 @F1@ FAM\n1 HUSB @I2@\n1 CHIL @I1@\n1 CHIL @I6@\n";
+
+/* Vérifie que « suivant » sur la personne centrale passe à son frère ou sa sœur suivant(e) et alimente
+ * l'historique. */
+TEST(treenav_move_next_on_the_root_selects_the_next_sibling) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    treenav_toggle(&nav, &db);
+
+    // When
+    treenav_move(&nav, &db, PED_NEXT);
+
+    // Then
+    ASSERT_EQ_STR("@I6@", nav_current(&nav, &db)->xref);
+    ASSERT_EQ_INT(1, nav.tree_sel);
+    ASSERT_EQ_INT(1, (int)nav.history_count);
+}
+
+/* Vérifie que « précédent » revient à la personne précédente de la fratrie. */
+TEST(treenav_move_prev_on_the_root_selects_the_previous_sibling) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 2;
+    treenav_toggle(&nav, &db);
+
+    // When
+    treenav_move(&nav, &db, PED_PREV);
+
+    // Then
+    ASSERT_EQ_STR("@I1@", nav_current(&nav, &db)->xref);
+}
+
+/* Vérifie qu'aux extrémités de la fratrie ou sans fratrie la personne centrale ne change pas. */
+TEST(treenav_move_between_siblings_stops_at_the_ends_and_without_siblings) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav first TL_AUTOCLEAN(nav_destroy);
+    nav_init(&first);
+    treenav_toggle(&first, &db);
+    Nav alone TL_AUTOCLEAN(nav_destroy);
+    nav_init(&alone);
+    alone.sel = 3;
+    treenav_toggle(&alone, &db);
+
+    // When
+    treenav_move(&first, &db, PED_PREV);
+    treenav_move(&alone, &db, PED_NEXT);
+
+    // Then
+    ASSERT_EQ_STR("@I1@", nav_current(&first, &db)->xref);
+    ASSERT_EQ_STR("@I7@", nav_current(&alone, &db)->xref);
+    ASSERT_EQ_INT(0, (int)first.history_count);
+}
+
+/* Vérifie que la liste des proches s'ouvre sur la première entrée quand la personne en a. */
+TEST(treenav_open_relatives_opens_the_list_on_the_first_entry) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    treenav_toggle(&nav, &db);
+
+    // When
+    treenav_open_relatives(&nav, &db);
+
+    // Then
+    ASSERT_EQ_INT(NAV_MENU_RELATIVES, nav.menu);
+    ASSERT_EQ_INT(0, nav.menu_sel);
+}
+
+/* Vérifie qu'aucune liste ne s'ouvre pour une personne sans proches. */
+TEST(treenav_open_relatives_does_nothing_without_relatives) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 3;
+    treenav_toggle(&nav, &db);
+
+    // When
+    treenav_open_relatives(&nav, &db);
+
+    // Then
+    ASSERT_EQ_INT(NAV_MENU_NONE, nav.menu);
+}
+
+/* Vérifie que choisir un proche (ici la sœur, après le parent) en fait la personne centrale et ferme la
+ * liste. */
+TEST(treenav_menu_choose_in_the_relatives_list_selects_that_person) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    treenav_toggle(&nav, &db);
+    treenav_open_relatives(&nav, &db);
+    treenav_menu_move(&nav, &db, 1);
+
+    // When
+    treenav_menu_choose(&nav, &db);
+
+    // Then
+    ASSERT_EQ_STR("@I6@", nav_current(&nav, &db)->xref);
+    ASSERT_EQ_INT(NAV_MENU_NONE, nav.menu);
+    ASSERT_EQ_INT(1, nav.tree_sel);
+}
+
+/* Vérifie que la sélection de la liste des proches reste bornée à ses extrémités. */
+TEST(treenav_menu_move_in_the_relatives_list_stays_within_the_entries) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(SIBLINGS, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    treenav_toggle(&nav, &db);
+    treenav_open_relatives(&nav, &db);
+
+    // When
+    treenav_menu_move(&nav, &db, -3);
+    int first = nav.menu_sel;
+    treenav_menu_move(&nav, &db, 10);
+
+    // Then
+    ASSERT_EQ_INT(0, first);
+    ASSERT_EQ_INT(1, nav.menu_sel);
 }
 
 /* Enregistre les scénarios de l'arbre d'ascendance et retourne leur bilan. */
 int main(void) {
     tl_suite("view/treenav");
+    RUN_TEST(treenav_move_next_on_the_root_selects_the_next_sibling);
+    RUN_TEST(treenav_move_prev_on_the_root_selects_the_previous_sibling);
+    RUN_TEST(treenav_move_between_siblings_stops_at_the_ends_and_without_siblings);
+    RUN_TEST(treenav_open_relatives_opens_the_list_on_the_first_entry);
+    RUN_TEST(treenav_open_relatives_does_nothing_without_relatives);
+    RUN_TEST(treenav_menu_choose_in_the_relatives_list_selects_that_person);
+    RUN_TEST(treenav_menu_move_in_the_relatives_list_stays_within_the_entries);
     RUN_TEST(treenav_toggle_opens_the_tree_on_the_root_box);
     RUN_TEST(treenav_toggle_closes_the_tree);
     RUN_TEST(treenav_toggle_does_nothing_outside_the_individuals_list);

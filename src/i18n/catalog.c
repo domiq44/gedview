@@ -58,6 +58,13 @@ static const struct {
     [S_STATUS_TREE] = {"STATUS_TREE", 0},
     [S_H_TREE] = {"H_TREE", 0},
     [S_T_CHILDREN] = {"T_CHILDREN", 0},
+    [S_T_RELATIVES] = {"T_RELATIVES", 0},
+    [S_REL_PARENTS] = {"REL_PARENTS", 0},
+    [S_REL_SIBLINGS] = {"REL_SIBLINGS", 0},
+    [S_REL_HALF_SIBLINGS] = {"REL_HALF_SIBLINGS", 0},
+    [S_REL_SPOUSES] = {"REL_SPOUSES", 0},
+    [S_REL_CHILDREN] = {"REL_CHILDREN", 0},
+    [S_H_RELATIVES] = {"H_RELATIVES", 0},
 };
 
 /* Duplique une valeur de catalogue et termine le processus si l'allocation échoue. */

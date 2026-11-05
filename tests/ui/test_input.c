@@ -626,13 +626,13 @@ TEST(input_tree_left_on_the_root_lets_the_user_pick_a_child) {
 
     // When
     press(KEY_LEFT, &db, &nav, &d);
-    int opened = nav.child_menu;
+    int opened = nav.menu;
     press(KEY_DOWN, &db, &nav, &d);
     press('\n', &db, &nav, &d);
 
     // Then
     ASSERT_EQ_INT(1, opened);
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
     ASSERT_EQ_STR("@I3@", nav_current(&nav, &db)->xref);
 }
 
@@ -648,18 +648,18 @@ TEST(input_children_list_up_keys_move_back_up) {
     press('t', &db, &nav, &d);
     press(KEY_LEFT, &db, &nav, &d);
     press('j', &db, &nav, &d);
-    int down = nav.child_sel;
+    int down = nav.menu_sel;
 
     // When
     press('k', &db, &nav, &d);
-    int after_k = nav.child_sel;
+    int after_k = nav.menu_sel;
     press('j', &db, &nav, &d);
     press(KEY_UP, &db, &nav, &d);
 
     // Then
     ASSERT_EQ_INT(1, down);
     ASSERT_EQ_INT(0, after_k);
-    ASSERT_EQ_INT(0, nav.child_sel);
+    ASSERT_EQ_INT(0, nav.menu_sel);
 }
 
 /* Vérifie que Échap et → ferment la liste des enfants sans changer d'individu. */
@@ -681,7 +681,7 @@ TEST(input_children_list_closes_on_escape_or_right_arrow) {
         press(keys[i], &db, &nav, &d);
 
         // Then
-        ASSERT_EQ_INT(0, nav.child_menu);
+        ASSERT_EQ_INT(0, nav.menu);
         ASSERT_EQ_STR("@I1@", nav_current(&nav, &db)->xref);
     }
 }
@@ -704,13 +704,95 @@ TEST(input_children_list_ignores_left_arrow_and_mouse) {
     press(KEY_MOUSE, &db, &nav, &d);
 
     // Then
-    ASSERT_EQ_INT(1, nav.child_menu);
-    ASSERT_EQ_INT(0, nav.child_sel);
+    ASSERT_EQ_INT(1, nav.menu);
+    ASSERT_EQ_INT(0, nav.menu_sel);
+}
+
+/* Vérifie que la touche p ouvre la liste des proches quand l'arbre est affiché. */
+TEST(input_p_key_opens_the_relatives_list_in_the_tree) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+
+    // When
+    press('p', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(NAV_MENU_RELATIVES, nav.menu);
+}
+
+/* Vérifie que la touche p est sans effet hors de l'arbre. */
+TEST(input_p_key_does_nothing_outside_the_tree) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+
+    // When
+    press('p', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(NAV_MENU_NONE, nav.menu);
+}
+
+/* Vérifie que ↓ puis Entrée dans la liste des proches choisissent le second proche (la mère). */
+TEST(input_relatives_list_down_then_enter_selects_the_second_relative) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+    press('p', &db, &nav, &d);
+
+    // When
+    press(KEY_DOWN, &db, &nav, &d);
+    press('\n', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_STR("@I3@", nav_current(&nav, &db)->xref);
+    ASSERT_EQ_INT(NAV_MENU_NONE, nav.menu);
+}
+
+/* Vérifie que ↓ et ↑ sur la personne centrale passent au frère ou à la sœur suivant(e) puis précédent(e). */
+TEST(input_up_and_down_on_the_central_person_step_between_siblings) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(CHILDREN, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+
+    // When
+    press(KEY_DOWN, &db, &nav, &d);
+    const char *after_down = nav_current(&nav, &db)->xref;
+    press(KEY_UP, &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_STR("@I3@", after_down);
+    ASSERT_EQ_STR("@I2@", nav_current(&nav, &db)->xref);
 }
 
 /* Enregistre les scénarios de saisie et retourne leur bilan au processus appelant. */
 int main(void) {
     tl_suite("ui/input");
+    RUN_TEST(input_p_key_opens_the_relatives_list_in_the_tree);
+    RUN_TEST(input_p_key_does_nothing_outside_the_tree);
+    RUN_TEST(input_relatives_list_down_then_enter_selects_the_second_relative);
+    RUN_TEST(input_up_and_down_on_the_central_person_step_between_siblings);
     RUN_TEST(input_tree_left_on_the_root_lets_the_user_pick_a_child);
     RUN_TEST(input_children_list_up_keys_move_back_up);
     RUN_TEST(input_children_list_closes_on_escape_or_right_arrow);

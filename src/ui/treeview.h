@@ -11,8 +11,9 @@
 /* Dessine dans win l'arbre de l'individu courant, centré, et mémorise les zones cliquables. */
 void treeview_draw(WINDOW *win, const Database *db, const Nav *nav);
 
-/* Dessine par-dessus l'écran la liste des enfants de l'individu courant, l'enfant sélectionné en évidence. */
-void treeview_draw_children(const Database *db, const Nav *nav);
+/* Dessine par-dessus l'écran la liste ouverte (enfants ou proches de l'individu courant), l'entrée
+   sélectionnée en évidence. */
+void treeview_draw_menu(const Database *db, const Nav *nav);
 
 /* Lit le clic de souris en attente et retourne le numéro de la case d'arbre touchée, ou 0. */
 int treeview_pick(void);

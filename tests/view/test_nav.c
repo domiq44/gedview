@@ -1167,14 +1167,14 @@ TEST(nav_restore_view_closes_the_tree_and_the_child_menu) {
     Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.tree = 1;
-    nav.child_menu = 1;
+    nav.menu = 1;
 
     // When
     nav_restore_view(&nav, K_FAM);
 
     // Then
     ASSERT_EQ_INT(0, nav.tree);
-    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.menu);
 }
 
 /* Enregistre les scénarios d'état, historique et recherche puis retourne leur bilan. */

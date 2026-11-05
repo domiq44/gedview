@@ -5,13 +5,6 @@
 
 #include "view/family.h"
 
-/* Retourne l'individu référencé par le sous-nœud tag de fam, ou NULL s'il est absent ou invalide. */
-static const Node *parent_of(const Database *db, const Node *fam, const char *tag) {
-    const Node *ref = fam ? node_sub(fam, tag) : NULL;
-    const Node *indi = ref ? db_find(db, ref->value) : NULL;
-    return indi && !strcmp(indi->tag, "INDI") ? indi : NULL;
-}
-
 /* Remplit la case n et, tant que la limite de générations n'est pas atteinte, celles de ses parents. */
 static void fill(Pedigree *p, const Database *db, int n, const Node *indi) {
     PedigreeBox *box = &p->box[n];
@@ -23,7 +16,7 @@ static void fill(Pedigree *p, const Database *db, int n, const Node *indi) {
 
     const Node *famc = node_sub(indi, "FAMC");
     const Node *fam = famc ? db_find(db, famc->value) : NULL;
-    const Node *father = parent_of(db, fam, "HUSB"), *mother = parent_of(db, fam, "WIFE");
+    const Node *father = family_member(db, fam, "HUSB"), *mother = family_member(db, fam, "WIFE");
     if (father) fill(p, db, 2 * n, father);
     if (mother) fill(p, db, (2 * n) + 1, mother);
 }

@@ -10,6 +10,9 @@
 
 typedef struct NavHistoryEntry NavHistoryEntry;
 
+/* Listes que l'on peut ouvrir par-dessus l'arbre d'ascendance. */
+typedef enum { NAV_MENU_NONE, NAV_MENU_CHILDREN, NAV_MENU_RELATIVES } NavMenu;
+
 /* État de navigation, indépendant de l'affichage. */
 typedef struct {
     Kind kind;            /* liste affichée */
@@ -18,8 +21,8 @@ typedef struct {
     int focus_detail;     /* 1 si le panneau de détail a le focus */
     int tree;             /* 1 si l'arbre d'ascendance remplace la liste et le détail (treenav) */
     int tree_sel;         /* numéro de la case sélectionnée de l'arbre (1 = individu) */
-    int child_menu;       /* 1 si la liste des enfants de l'individu est ouverte */
-    int child_sel;        /* enfant sélectionné dans cette liste */
+    int menu;             /* liste ouverte par-dessus l'arbre : NavMenu */
+    int menu_sel;         /* entrée sélectionnée dans cette liste */
     char search[128];     /* dernier terme de recherche */
     int saved_sel[K_COUNT], saved_top[K_COUNT]; /* positions des listes inactives */
     NavHistoryEntry *history;

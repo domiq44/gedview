@@ -150,10 +150,57 @@ void treeview_draw(WINDOW *win, const Database *db, const Nav *nav) {
     }
 }
 
-/* Dessine dans une fenêtre centrée les enfants (libellé et dates), défilante autour de la sélection. */
-void treeview_draw_children(const Database *db, const Nav *nav) {
-    const Node *children[FAMILY_MAX_CHILDREN];
-    int count = person_children(db, nav_current(nav, db), children, FAMILY_MAX_CHILDREN);
+/* Ligne d'une liste : texte et indicateur d'intitulé de groupe (non sélectionnable). */
+typedef struct {
+    char text[168];
+    int heading;
+} PopupLine;
+
+/* Ajoute la ligne d'un individu : libellé puis dates, décalés de indent espaces. */
+static void add_person_line(PopupLine *lines, int *count, const Database *db, const Node *indi, int indent) {
+    char label[96], dates[48];
+    person_summary(db, indi, label, sizeof label, dates, sizeof dates);
+    snprintf(lines[*count].text, sizeof lines[*count].text, "%*s%s  %s", indent, "", label, dates);
+    lines[(*count)++].heading = 0;
+}
+
+/* Construit les lignes de la liste ouverte, avec des intitulés de groupe pour les proches ; retourne leur
+   nombre et place dans *selected l'indice de la ligne de l'entrée sélectionnée. */
+static int build_menu_lines(PopupLine *lines, const Database *db, const Nav *nav, int *selected) {
+    static const int HEADINGS[REL_COUNT] = {
+        S_REL_PARENTS, S_REL_SIBLINGS, S_REL_HALF_SIBLINGS, S_REL_SPOUSES, S_REL_CHILDREN,
+    };
+    const Node *current = nav_current(nav, db);
+    int count = 0, entry = 0;
+    *selected = 0;
+    if (nav->menu == NAV_MENU_CHILDREN) {
+        const Node *children[FAMILY_MAX_CHILDREN];
+        int n = person_children(db, current, children, FAMILY_MAX_CHILDREN);
+        for (; entry < n; entry++) {
+            if (entry == nav->menu_sel) *selected = count;
+            add_person_line(lines, &count, db, children[entry], 0);
+        }
+        return count;
+    }
+    Relative relatives[FAMILY_MAX_RELATIVES];
+    int n = person_relatives(db, current, relatives, FAMILY_MAX_RELATIVES);
+    for (; entry < n; entry++) {
+        if (entry == 0 || relatives[entry].relation != relatives[entry - 1].relation) {
+            snprintf(lines[count].text, sizeof lines[count].text, "%s",
+                     T(HEADINGS[relatives[entry].relation]));
+            lines[count++].heading = 1;
+        }
+        if (entry == nav->menu_sel) *selected = count;
+        add_person_line(lines, &count, db, relatives[entry].indi, 2);
+    }
+    return count;
+}
+
+/* Dessine dans une fenêtre centrée la liste ouverte (enfants ou proches), défilante autour de la sélection.
+ */
+void treeview_draw_menu(const Database *db, const Nav *nav) {
+    PopupLine lines[FAMILY_MAX_RELATIVES + REL_COUNT];
+    int sel, count = build_menu_lines(lines, db, nav, &sel);
     int w = COLS - 2 < 64 ? COLS - 2 : 64;
     int rows = count < LINES - 5 ? count : LINES - 5;
     if (count < 1 || rows < 1 || w < 10) return;
@@ -161,16 +208,14 @@ void treeview_draw_children(const Database *db, const Nav *nav) {
     WINDOW *menu = newwin(h, w, (LINES - 1 - h) / 2, (COLS - w) / 2);
     if (!menu) return;
 
-    int sel = nav->child_sel < count ? nav->child_sel : count - 1;
     int first = sel < rows ? 0 : sel - rows + 1;
-    draw_frame(menu, T(S_T_CHILDREN));
+    draw_frame(menu, T(nav->menu == NAV_MENU_CHILDREN ? S_T_CHILDREN : S_T_RELATIVES));
     for (int i = 0; i < rows; i++) {
-        char label[96], dates[48], line[sizeof label + sizeof dates + 2];
-        person_summary(db, children[first + i], label, sizeof label, dates, sizeof dates);
-        snprintf(line, sizeof line, "%s  %s", label, dates);
-        if (first + i == sel) wattrset(menu, selected_attrs());
+        const PopupLine *line = &lines[first + i];
+        int heading = line->heading;
+        wattrset(menu, first + i == sel ? selected_attrs() : (heading ? (int)A_BOLD : 0));
         mvwhline(menu, i + 1, 1, ' ', w - 2);
-        mvwaddnstr(menu, i + 1, 1, line, w - 2);
+        mvwaddnstr(menu, i + 1, 1, line->text, w - 2);
         wattrset(menu, A_NORMAL);
     }
     wnoutrefresh(menu);

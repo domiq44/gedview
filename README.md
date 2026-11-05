@@ -105,6 +105,8 @@ s'il est présent.
 | arbre : `←` `→` `↑` `↓` ou `k` `j` | aller à l'enfant, au parent (père d'abord), à la case précédente/suivante de la génération |
 | arbre : `Entrée` ou clic gauche | recentrer l'arbre sur la case choisie, qui devient l'individu sélectionné (`Backspace` revient en arrière) |
 | arbre : `←` sur la personne centrale | liste de ses enfants (`↑` `↓`, `Entrée` pour choisir, `Échap` ou `→` pour annuler) |
+| arbre : `↑` `↓` sur la personne centrale | passer au frère ou à la sœur précédent(e)/suivant(e) (famille parentale) |
+| arbre : `p` | liste des proches de la personne centrale : parents, frères et sœurs, demi-frères et demi-sœurs, conjoints, enfants (`↑` `↓`, `Entrée` pour choisir, `Échap` ou `→` pour annuler) |
 | `/` | rechercher dans la liste (`Entrée` valide, `Échap` annule) ; le texte est cherché dans le libellé ou l'XREF, sans tenir compte de la casse. Pour un XREF exact, inclure les `@` : `@S2@` trouve `S2` mais pas `S20`. Dans les vues Source et Citation, le XREF (`@R3@`) ou le nom du dépôt de la source est aussi cherché |
 | `F3` ou `g` | résultat suivant pour la dernière recherche (`g` si F3 est interceptée, par exemple dans VS Code) |
 | `l` | changer de langue |

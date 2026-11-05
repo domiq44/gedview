@@ -52,6 +52,13 @@ enum {
     S_STATUS_TREE,
     S_H_TREE,
     S_T_CHILDREN,
+    S_T_RELATIVES,
+    S_REL_PARENTS,
+    S_REL_SIBLINGS,
+    S_REL_HALF_SIBLINGS,
+    S_REL_SPOUSES,
+    S_REL_CHILDREN,
+    S_H_RELATIVES,
     NSTR,
 };
 

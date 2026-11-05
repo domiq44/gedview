@@ -84,7 +84,7 @@ void nav_restore_view(Nav *nav, Kind kind) {
     switch_kind(nav, kind);
     nav->focus_detail = 0;
     nav->tree = 0;
-    nav->child_menu = 0;
+    nav->menu = 0;
 }
 
 /* Ajoute l'état à l'historique si nécessaire, active kind et rend le focus à la liste. */
@@ -93,7 +93,7 @@ void nav_set_kind(Nav *nav, Kind kind) {
     switch_kind(nav, kind);
     nav->focus_detail = 0;
     nav->tree = 0;
-    nav->child_menu = 0;
+    nav->menu = 0;
 }
 
 /* Bascule le focus clavier entre la liste et le détail. */
@@ -205,7 +205,7 @@ void nav_back(Nav *nav) {
     nav->focus_detail = previous.focus_detail;
     nav->tree_sel = 1;
     if (nav->kind != K_INDI) nav->tree = 0;
-    nav->child_menu = 0;
+    nav->menu = 0;
 }
 
 /* Recherche needle dans text sans casse, en Unicode si les deux chaînes sont convertibles. */

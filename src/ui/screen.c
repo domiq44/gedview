@@ -230,7 +230,7 @@ void screen_draw(const Database *db, const Nav *nav, const Detail *d) {
         werase(tree_win);
         treeview_draw(tree_win, db, nav);
         wnoutrefresh(tree_win);
-        if (nav->child_menu) treeview_draw_children(db, nav);
+        if (nav->menu) treeview_draw_menu(db, nav);
         doupdate();
         return;
     }

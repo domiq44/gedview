@@ -15,10 +15,10 @@ static int is_heading(int id) {
 /* Dessine la page d'aide, attend une touche et demande la reconstruction de l'écran principal. */
 void help_show(void) {
     static const int ids[] = {
-        S_H_TITLE, S_BLANK,  S_H_VIEWS, S_H_I,       S_H_F,      S_H_S,       S_H_R,
-        S_H_M,     S_H_N,    S_H_CITA,  S_H_TREE,    S_H_NAV,    S_H_UPDOWN,  S_H_PAGE,
-        S_H_HOME,  S_H_TAB,  S_H_ENTER, S_H_SEARCHT, S_H_SEARCH, S_H_SEARCHX, S_H_SEARCHR,
-        S_H_MISC,  S_H_HELP, S_H_LANG,  S_H_COLOR,   S_H_QUIT,   S_H_HISTORY, S_H_BACK,
+        S_H_TITLE, S_BLANK,   S_H_VIEWS,   S_H_I,         S_H_F,       S_H_S,       S_H_R,    S_H_M,
+        S_H_N,     S_H_CITA,  S_H_TREE,    S_H_RELATIVES, S_H_NAV,     S_H_UPDOWN,  S_H_PAGE, S_H_HOME,
+        S_H_TAB,   S_H_ENTER, S_H_SEARCHT, S_H_SEARCH,    S_H_SEARCHX, S_H_SEARCHR, S_H_MISC, S_H_HELP,
+        S_H_LANG,  S_H_COLOR, S_H_QUIT,    S_H_HISTORY,   S_H_BACK,
     };
     do {
         erase();

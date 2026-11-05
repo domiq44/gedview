@@ -10,8 +10,8 @@
 
 #define FAR (1 << 30) /* delta de déplacement pour aller au début/à la fin */
 
-/* Applique les touches de la liste des enfants ouverte ; retourne 1 si la touche est consommée. */
-static int handle_child_menu_key(int key, const Database *db, Nav *nav) {
+/* Applique les touches de la liste ouverte (enfants ou proches) ; retourne 1 si la touche est consommée. */
+static int handle_menu_key(int key, const Database *db, Nav *nav) {
     switch (key) {
     case KEY_UP:
     case 'k':
@@ -39,8 +39,12 @@ static int handle_child_menu_key(int key, const Database *db, Nav *nav) {
 
 /* Applique les touches propres à l'arbre d'ascendance ; retourne 1 si la touche est consommée. */
 static int handle_tree_key(int key, const Database *db, Nav *nav, const InputHooks *hooks) {
-    if (nav->child_menu && handle_child_menu_key(key, db, nav)) return 1;
+    if (nav->menu && handle_menu_key(key, db, nav)) return 1;
     switch (key) {
+    case 'p':
+    case 'P':
+        treenav_open_relatives(nav, db);
+        return 1;
     case KEY_LEFT:
         treenav_move(nav, db, PED_CHILD);
         return 1;
