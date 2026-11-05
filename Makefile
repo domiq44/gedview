@@ -6,6 +6,7 @@ LDLIBS = -lncursesw
 # Dossier des fichiers générés ; `make coverage` le remplace pour ne pas mélanger les objets instrumentés.
 BUILD ?= build
 COV_DIR = build-cov
+SAN_DIR = build-asan
 
 # Installation utilisateur (sans root) : programme, traductions et lanceur dans APPDIR, entrée dans DESKTOP_DIR.
 DATA_HOME ?= $(or $(XDG_DATA_HOME),$(HOME)/.local/share)
@@ -31,8 +32,14 @@ TEST_FILES = $(TEST_SRC) $(TEST_SUPPORT_SRC) $(wildcard tests/*/*.h)
 UNTESTED_SRC = src/main.c src/ui/screen.c src/ui/help.c src/ui/external.c
 LIB_OBJ = $(filter-out $(UNTESTED_SRC:src/%.c=$(BUILD)/%.o),$(OBJ))
 TEST_CFLAGS += -Wall -Wextra -O0 -g -Isrc -Itests -MMD -MP
+ifdef SANITIZE
+SANITIZER_FLAGS = -fsanitize=address,undefined -fno-omit-frame-pointer
+CFLAGS += $(SANITIZER_FLAGS) -O1 -g
+TEST_CFLAGS += $(SANITIZER_FLAGS) -O1 -g
+LDFLAGS += $(SANITIZER_FLAGS)
+endif
 
-.PHONY: all clean distclean lint cppcheck format format-check test coverage check-tools check-compiler FORCE \
+.PHONY: all clean distclean lint cppcheck format format-check test coverage sanitize check-tools check-compiler FORCE \
 	install-desktop uninstall-desktop \
 	check-ncurses check-cppcheck check-clang-format check-clang-tidy check-gcov
 
@@ -106,6 +113,12 @@ coverage: check-gcov
 	@$(MAKE) --no-print-directory BUILD=$(COV_DIR) COVERAGE=1 test
 	@scripts/coverage.sh $(COV_DIR) $(filter-out $(UNTESTED_SRC),$(SRC))
 
+# AddressSanitizer + UndefinedBehaviorSanitizer ; LSan est désactivé pour les fixtures à durée de vie processus.
+sanitize: check-compiler
+	@rm -rf $(SAN_DIR)
+	@ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+		$(MAKE) --no-print-directory BUILD=$(SAN_DIR) SANITIZE=1 test
+
 # Lint clang-tidy (règles dans .clang-tidy) ; échoue si un contrôle est signalé.
 lint: check-clang-tidy
 	clang-tidy --quiet $(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC) -- -Isrc -Itests
@@ -140,7 +153,7 @@ uninstall-desktop:
 
 # Supprime les dossiers de build, de couverture et l'exécutable.
 clean:
-	rm -rf build $(COV_DIR) gedview
+	rm -rf build $(COV_DIR) $(SAN_DIR) gedview
 
 # clean + fichiers parasites (sauvegardes d'éditeur, core dumps, sorties valgrind).
 distclean: clean

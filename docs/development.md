@@ -17,6 +17,7 @@ Pour les outils de développement, Fedora fournit `cppcheck` et `clang-tools-ext
 | `make` | Compile `gedview` (objets dans `build/`) |
 | `make test` | Compile et lance les tests unitaires et d'intégration |
 | `make coverage` | Lance les tests instrumentés dans `build-cov/` et résume la couverture gcov |
+| `make sanitize` | Lance les tests avec AddressSanitizer et UndefinedBehaviorSanitizer dans `build-asan/` |
 | `make lint` | Exécute `clang-tidy` sur `src/` et `tests/` (règles dans `.clang-tidy`) |
 | `make cppcheck` | Exécute l'analyse statique sur `src/` et `tests/` |
 | `make format-check` | Vérifie le format sans modifier les fichiers (`.clang-format`) |
@@ -24,10 +25,14 @@ Pour les outils de développement, Fedora fournit `cppcheck` et `clang-tools-ext
 | `make check-tools` | Vérifie la présence de GCC, gcov, ncursesw, cppcheck, clang-format et clang-tidy |
 | `make install-desktop` | Installe le programme, `lang/` et une entrée de menu pour l'utilisateur courant |
 | `make uninstall-desktop` | Supprime ce qu'a installé `install-desktop` |
-| `make clean` | Supprime `build/`, `build-cov/` et l'exécutable |
+| `make clean` | Supprime `build/`, `build-cov/`, `build-asan/` et l'exécutable |
 | `make distclean` | `clean` et supprime aussi `*~`, `*.swp`, `core*` et `vgcore.*` |
 
 Les tests s'exécutent depuis la racine du dépôt. Les conventions détaillées, la structure des tests et les chemins ncurses volontairement exclus sont décrits dans [AGENTS.md](../AGENTS.md).
+
+`make sanitize` utilise le compilateur configuré par `CC` avec `-fsanitize=address,undefined`. La détection des
+fuites est désactivée pour cette cible, car plusieurs fixtures gardent leurs arbres et bases en mémoire jusqu'à la
+fin du processus; les erreurs d'accès mémoire et de comportement indéfini restent fatales.
 
 ## Ajouter un type d'enregistrement
 

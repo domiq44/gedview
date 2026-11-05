@@ -106,5 +106,6 @@ s'il est présent.
 - [Calcul des versions et publication](docs/releasing.md)
 - [Conventions de contribution et de test](AGENTS.md)
 
-Pour compiler et lancer les tests : `make` puis `make test`. Les autres cibles et leurs prérequis sont dans le
+Pour compiler et lancer les tests : `make` puis `make test`. `make sanitize` relance les tests avec AddressSanitizer
+et UndefinedBehaviorSanitizer. Les autres cibles et leurs prérequis sont dans le
 [guide de développement](docs/development.md).

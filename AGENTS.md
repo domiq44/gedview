@@ -9,6 +9,7 @@ framework maison `tests/support/testlib.h`.
 | --- | --- |
 | `make test` | compile et lance tous les tests (code de sortie ≠ 0 si un test échoue) |
 | `make coverage` | lance les tests instrumentés (`build-cov/`) et affiche la couverture gcov par fichier (`scripts/coverage.sh`) |
+| `make sanitize` | lance les tests avec AddressSanitizer et UndefinedBehaviorSanitizer (`build-asan/`; détection des fuites désactivée pour les fixtures à durée de vie processus) |
 | `make lint` | `clang-tidy` sur `src/` et `tests/` (règles dans `.clang-tidy`) |
 | `make cppcheck` | `cppcheck` sur `src/` et `tests/` |
 | `make format` / `make format-check` | `clang-format` sur `src/` et `tests/` |
@@ -19,7 +20,9 @@ Les cibles vérifient elles-mêmes la présence de leur outil. Si un outil manqu
 l'indiquer à l'utilisateur avec la commande d'installation affichée.
 
 Les tests se lancent **depuis la racine du projet** (certains lisent `gedcom-test.ged` et `lang/`). Avant de
-terminer un travail : `make test`, `make lint`, `make cppcheck` et `make format-check` doivent passer.
+terminer un travail : `make test`, `make lint`, `make cppcheck` et `make format-check` doivent passer. `make sanitize`
+ajoute les contrôles d'accès mémoire et de comportement indéfini; il nécessite un compilateur compatible avec
+`-fsanitize=address,undefined`.
 
 ## Documentation
 
