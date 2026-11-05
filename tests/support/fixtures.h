@@ -10,6 +10,10 @@
 
 /* Crée un dossier temporaire qui sera supprimé automatiquement à la fin du test. */
 const char *fx_tempdir(void);
+/* Enregistre une racine GEDCOM pour la libérer à la fin du processus de test. */
+void fx_track_root(Node *root);
+/* Libère une racine suivie et la retire du nettoyage final. */
+void fx_free_root(Node *root);
 /* Écrit content dans dir/filename et enregistre le fichier pour le nettoyage final. */
 void fx_write(const char *dir, const char *filename, const char *content);
 

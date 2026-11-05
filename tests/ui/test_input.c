@@ -68,9 +68,9 @@ static void reset_doubles(void) {
 /* Vérifie que les touches q et Q demandent l'arrêt de la boucle principale. */
 TEST(input_quit_keys_ask_the_program_to_stop) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     const int keys[] = {'q', 'Q'};
@@ -87,9 +87,9 @@ TEST(input_quit_keys_ask_the_program_to_stop) {
 /* Vérifie qu'une touche inconnue laisse l'état inchangé et conserve l'exécution. */
 TEST(input_unknown_key_changes_nothing_and_keeps_running) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
     Detail d = {0};
@@ -106,9 +106,9 @@ TEST(input_unknown_key_changes_nothing_and_keeps_running) {
 /* Vérifie qu'une touche de vue ouvre la liste correspondant à son type. */
 TEST(input_view_key_switches_to_the_matching_list) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -123,9 +123,9 @@ TEST(input_view_key_switches_to_the_matching_list) {
 /* Vérifie que v et V demandent le changement du mode couleur. */
 TEST(input_color_keys_toggle_the_display_mode) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     reset_doubles();
@@ -144,9 +144,9 @@ TEST(input_color_keys_toggle_the_display_mode) {
 /* Vérifie que Tab bascule le focus entre liste et détail. */
 TEST(input_tab_toggles_the_focus_between_list_and_detail) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -160,13 +160,13 @@ TEST(input_tab_toggles_the_focus_between_list_and_detail) {
 /* Vérifie que KEY_DOWN et j déplacent la sélection vers le bas. */
 TEST(input_down_keys_move_the_selection_down) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
     Detail d = {0};
     const int keys[] = {KEY_DOWN, 'j'};
 
     for (int i = 0; i < 2; i++) {
-        Nav nav;
+        Nav nav TL_AUTOCLEAN(nav_destroy);
         nav_init(&nav);
 
         // When
@@ -180,13 +180,13 @@ TEST(input_down_keys_move_the_selection_down) {
 /* Vérifie que KEY_UP et k déplacent la sélection vers le haut. */
 TEST(input_up_keys_move_the_selection_up) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
     Detail d = {0};
     const int keys[] = {KEY_UP, 'k'};
 
     for (int i = 0; i < 2; i++) {
-        Nav nav;
+        Nav nav TL_AUTOCLEAN(nav_destroy);
         nav_init(&nav);
         nav.sel = 2;
 
@@ -201,9 +201,9 @@ TEST(input_up_keys_move_the_selection_up) {
 /* Vérifie que Page Down déplace la sélection d'une taille de page. */
 TEST(input_page_down_moves_by_the_number_of_visible_lines) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -217,9 +217,9 @@ TEST(input_page_down_moves_by_the_number_of_visible_lines) {
 /* Vérifie que Page Up remonte la sélection d'une taille de page. */
 TEST(input_page_up_moves_back_by_the_number_of_visible_lines) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 2;
     Detail d = {0};
@@ -234,9 +234,9 @@ TEST(input_page_up_moves_back_by_the_number_of_visible_lines) {
 /* Vérifie que End et Home sélectionnent respectivement le dernier et le premier élément. */
 TEST(input_end_and_home_jump_to_the_last_and_first_items) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -253,9 +253,9 @@ TEST(input_end_and_home_jump_to_the_last_and_first_items) {
 /* Vérifie que les deux codes Entrée donnent le focus au détail. */
 TEST(input_enter_gives_the_focus_to_the_detail) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     const int keys[] = {'\n', KEY_ENTER};
@@ -274,7 +274,7 @@ TEST(input_enter_gives_the_focus_to_the_detail) {
 /* Vérifie qu'Entrée transmet les liens URL et média au gestionnaire externe injecté. */
 TEST(input_enter_opens_external_links) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
     Line lines[] = {
         {.text = "NOTE: https://example.test", .link = "https://example.test", .link_kind = LINE_LINK_URL},
@@ -283,7 +283,7 @@ TEST(input_enter_opens_external_links) {
     Detail d = {.lines = lines, .count = 2};
     const LineLinkKind kinds[] = {LINE_LINK_URL, LINE_LINK_MEDIA};
     const char *targets[] = {"https://example.test", "media/photo.jpg"};
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
 
@@ -305,7 +305,7 @@ TEST(input_enter_opens_external_links) {
 /* Vérifie que les variantes courantes de Retour arrière restaurent l'enregistrement précédent. */
 TEST(input_backspace_keys_return_to_the_previous_record) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
     Detail d = {0};
     Line lines[] = {{"FAMS: @F1@", "@F1@", LINE_LINK_RECORD, 0, 0}};
@@ -314,7 +314,7 @@ TEST(input_backspace_keys_return_to_the_previous_record) {
     const int keys[] = {KEY_BACKSPACE, 127, 8};
 
     for (size_t i = 0; i < sizeof keys / sizeof *keys; i++) {
-        Nav nav;
+        Nav nav TL_AUTOCLEAN(nav_destroy);
         nav_init(&nav);
         nav.focus_detail = 1;
         nav_activate(&nav, &db, &d);
@@ -331,9 +331,9 @@ TEST(input_backspace_keys_return_to_the_previous_record) {
 /* Vérifie que Retour arrière annule aussi un déplacement entre les individus de la liste. */
 TEST(input_backspace_undoes_a_list_selection_change) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     press('j', &db, &nav, &d);
@@ -349,9 +349,9 @@ TEST(input_backspace_undoes_a_list_selection_change) {
 /* Vérifie qu'une recherche validée sélectionne l'élément correspondant au texte saisi. */
 TEST(input_search_selects_the_item_matching_the_text_typed_by_the_user) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     reset_doubles();
@@ -370,9 +370,9 @@ TEST(input_f3_searches_the_next_match_without_prompting_again) {
     // Given
     const int keys[] = {KEY_F(3), 'g', 'G'};
     for (size_t i = 0; i < sizeof keys / sizeof *keys; i++) {
-        Database db;
+        Database db TL_AUTOCLEAN(db_destroy);
         fx_database(TREE, &db);
-        Nav nav;
+        Nav nav TL_AUTOCLEAN(nav_destroy);
         nav_init(&nav);
         Detail d = {0};
         reset_doubles();
@@ -393,9 +393,9 @@ TEST(input_f3_searches_the_next_match_without_prompting_again) {
 /* Vérifie que l'annulation de la saisie de recherche ne change pas la sélection. */
 TEST(input_search_does_nothing_when_the_user_cancels_the_prompt) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     reset_doubles();
@@ -412,9 +412,9 @@ TEST(input_search_does_nothing_when_the_user_cancels_the_prompt) {
 /* Vérifie que h, H et F1 déclenchent chacun l'affichage de l'aide. */
 TEST(input_help_keys_show_the_help_page) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     reset_doubles();
@@ -432,9 +432,9 @@ TEST(input_help_keys_show_the_help_page) {
 /* Vérifie que la touche l passe au catalogue de langue suivant. */
 TEST(input_language_key_switches_to_the_next_language) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     const char *dir = fx_tempdir();

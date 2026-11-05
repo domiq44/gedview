@@ -34,3 +34,14 @@ git describe --tags --always --dirty
 La sortie attendue est le tag de la version publiée.
 
 Voir [Développement](development.md) pour les commandes de test et les conventions, et [Architecture](architecture.md) pour le fonctionnement interne.
+
+## Vérifications manuelles avant publication
+
+Depuis la racine du dépôt, lancer `./gedview gedcom-test.ged` dans un terminal interactif et vérifier :
+
+- le rendu des deux panneaux, les vues principales, `Tab`, le suivi d'un lien et le retour arrière ;
+- la recherche, l'aide, le changement de langue et la fermeture avec `q` sans laisser le terminal dans un état altéré ;
+- le redimensionnement vers un terminal trop petit, l'apparition du message dédié, puis le retour au rendu normal après agrandissement ;
+- l'ouverture d'une URL de note et d'un média d'exemple dans un environnement où `xdg-open` et les applications associées sont disponibles.
+
+Ces vérifications complètent `make sanitize` et les tests automatisés, qui ne couvrent ni le rendu ncurses ni le lancement réel de programmes externes.

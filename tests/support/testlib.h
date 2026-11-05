@@ -30,6 +30,7 @@ void tl_check_str(const char *file, int line, const char *expr, const char *expe
 
 #define TEST(name) static void name(void)
 #define RUN_TEST(name) tl_run(#name, name)
+#define TL_AUTOCLEAN(fn) __attribute__((cleanup(fn)))
 
 #define ASSERT_TRUE(cond)                                                                                    \
     do {                                                                                                     \

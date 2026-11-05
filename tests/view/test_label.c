@@ -32,7 +32,7 @@ TEST(display_name_substitutes_placeholder_when_name_is_empty) {
 /* Vérifie que display_label restitue le libellé calculé pour l'enregistrement. */
 TEST(display_label_returns_the_record_label) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Marie/CURIE/\n", &db);
     char out[64];
 
@@ -46,7 +46,7 @@ TEST(display_label_returns_the_record_label) {
 /* Vérifie qu'un individu sans nom reçoit le libellé de remplacement. */
 TEST(display_label_substitutes_placeholder_for_a_nameless_individual) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n", &db);
     char out[64];
 
@@ -60,7 +60,7 @@ TEST(display_label_substitutes_placeholder_for_a_nameless_individual) {
 /* Vérifie que les autres types conservent leur XREF lorsqu'aucun libellé n'existe. */
 TEST(display_label_keeps_xref_fallback_of_other_kinds) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @S1@ SOUR\n", &db);
     char out[64];
 

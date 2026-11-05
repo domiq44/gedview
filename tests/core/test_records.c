@@ -95,7 +95,7 @@ TEST(kind_from_tag_returns_minus_one_for_non_record_tags) {
 /* Vérifie que le libellé d'un individu est son nom GEDCOM formaté. */
 TEST(record_label_of_individual_is_the_formatted_name) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Marie/CURIE/\n", &db);
     char out[64];
 
@@ -109,7 +109,7 @@ TEST(record_label_of_individual_is_the_formatted_name) {
 /* Vérifie qu'un individu sans tag NAME reçoit un libellé vide. */
 TEST(record_label_of_individual_without_name_is_empty) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n", &db);
     char out[64] = "junk";
 
@@ -123,7 +123,7 @@ TEST(record_label_of_individual_without_name_is_empty) {
 /* Vérifie que le libellé d'une famille réunit les noms des deux conjoints. */
 TEST(record_label_of_family_joins_husband_and_wife_names) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Pierre/CURIE/\n0 @I2@ INDI\n1 NAME Marie/CURIE/\n"
                 "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n",
                 &db);
@@ -139,7 +139,7 @@ TEST(record_label_of_family_joins_husband_and_wife_names) {
 /* Vérifie qu'un conjoint référencé mais introuvable est indiqué par un point d'interrogation. */
 TEST(record_label_of_family_shows_question_mark_for_a_missing_spouse) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Pierre/CURIE/\n0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I9@\n", &db);
     char out[128];
 
@@ -153,7 +153,7 @@ TEST(record_label_of_family_shows_question_mark_for_a_missing_spouse) {
 /* Vérifie qu'un conjoint sans nom affichable est remplacé par un point d'interrogation. */
 TEST(record_label_of_family_shows_question_mark_for_a_nameless_spouse) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n0 @F1@ FAM\n1 WIFE @I1@\n", &db);
     char out[128];
 
@@ -167,7 +167,7 @@ TEST(record_label_of_family_shows_question_mark_for_a_nameless_spouse) {
 /* Vérifie que le titre d'une source prévaut sur son abréviation. */
 TEST(record_label_of_source_prefers_title_over_abbreviation) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @S1@ SOUR\n1 ABBR Reg\n1 TITL Registre paroissial\n", &db);
     char out[64];
 
@@ -181,7 +181,7 @@ TEST(record_label_of_source_prefers_title_over_abbreviation) {
 /* Vérifie que l'abréviation sert de libellé si la source n'a pas de titre. */
 TEST(record_label_of_source_falls_back_to_abbreviation) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @S1@ SOUR\n1 ABBR Reg\n", &db);
     char out[64];
 
@@ -195,7 +195,7 @@ TEST(record_label_of_source_falls_back_to_abbreviation) {
 /* Vérifie que le XREF sert de libellé si une source n'a ni titre ni abréviation. */
 TEST(record_label_of_source_falls_back_to_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @S1@ SOUR\n", &db);
     char out[64];
 
@@ -209,7 +209,7 @@ TEST(record_label_of_source_falls_back_to_xref) {
 /* Vérifie que le nom est utilisé comme libellé d'un dépôt. */
 TEST(record_label_of_repository_is_its_name) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @R1@ REPO\n1 NAME Archives departementales\n", &db);
     char out[64];
 
@@ -223,7 +223,7 @@ TEST(record_label_of_repository_is_its_name) {
 /* Vérifie que le XREF remplace le nom absent d'un dépôt. */
 TEST(record_label_of_repository_without_name_is_its_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @R1@ REPO\n", &db);
     char out[64];
 
@@ -237,7 +237,7 @@ TEST(record_label_of_repository_without_name_is_its_xref) {
 /* Vérifie que le titre d'un média prévaut sur son nom de fichier. */
 TEST(record_label_of_media_prefers_title_over_file) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @M1@ OBJE\n1 FILE photo.jpg\n1 TITL Portrait\n", &db);
     char out[64];
 
@@ -251,7 +251,7 @@ TEST(record_label_of_media_prefers_title_over_file) {
 /* Vérifie que le média utilise d'abord le fichier, puis son XREF en dernier recours. */
 TEST(record_label_of_media_falls_back_to_file_then_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @M1@ OBJE\n1 FILE photo.jpg\n0 @M2@ OBJE\n", &db);
     char with_file[64], without[64];
 
@@ -267,7 +267,7 @@ TEST(record_label_of_media_falls_back_to_file_then_xref) {
 /* Vérifie que le libellé d'une note ne contient que sa première ligne. */
 TEST(record_label_of_note_is_its_first_line) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @N1@ NOTE first line\n1 CONT second line\n", &db);
     char out[64];
 
@@ -281,7 +281,7 @@ TEST(record_label_of_note_is_its_first_line) {
 /* Vérifie qu'une note vide utilise son XREF comme libellé. */
 TEST(record_label_of_empty_note_is_its_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @N1@ NOTE\n", &db);
     char out[64];
 

@@ -113,10 +113,10 @@ coverage: check-gcov
 	@$(MAKE) --no-print-directory BUILD=$(COV_DIR) COVERAGE=1 test
 	@scripts/coverage.sh $(COV_DIR) $(filter-out $(UNTESTED_SRC),$(SRC))
 
-# AddressSanitizer + UndefinedBehaviorSanitizer ; LSan est désactivé pour les fixtures à durée de vie processus.
+# AddressSanitizer + UndefinedBehaviorSanitizer + LeakSanitizer.
 sanitize: check-compiler
 	@rm -rf $(SAN_DIR)
-	@ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+	@ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
 		$(MAKE) --no-print-directory BUILD=$(SAN_DIR) SANITIZE=1 test
 
 # Lint clang-tidy (règles dans .clang-tidy) ; échoue si un contrôle est signalé.

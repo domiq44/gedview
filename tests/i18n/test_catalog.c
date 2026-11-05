@@ -16,7 +16,7 @@ static const char *load_en(Catalog *c, const char *content) {
 /* Vérifie qu'une valeur de traduction est chargée par sa clé. */
 TEST(catalog_load_reads_a_message_by_key) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=Unnamed\n");
@@ -28,7 +28,7 @@ TEST(catalog_load_reads_a_message_by_key) {
 /* Vérifie que le message signalant un terminal trop petit est chargé. */
 TEST(catalog_load_reads_the_small_terminal_message) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "SMALLSCREEN=Resize terminal\n");
@@ -40,7 +40,7 @@ TEST(catalog_load_reads_the_small_terminal_message) {
 /* Vérifie qu'une clé absente du catalogue retourne NULL. */
 TEST(catalog_msg_returns_null_for_a_key_not_in_the_file) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=Unnamed\n");
@@ -52,7 +52,7 @@ TEST(catalog_msg_returns_null_for_a_key_not_in_the_file) {
 /* Vérifie que les commentaires et lignes sans signe égal ne créent pas d'entrée. */
 TEST(catalog_load_ignores_comments_and_lines_without_equals_sign) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "# NONAME=commented out\nthis is not an entry\n\nDETAIL=Details\n");
@@ -65,7 +65,7 @@ TEST(catalog_load_ignores_comments_and_lines_without_equals_sign) {
 /* Vérifie que les clés inconnues sont ignorées sans perturber les clés valides. */
 TEST(catalog_load_ignores_unknown_keys) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "BOGUS=1\nNONAME=Unnamed\n");
@@ -78,7 +78,7 @@ TEST(catalog_load_ignores_unknown_keys) {
 /* Vérifie que la séquence échappée \n devient un retour à la ligne. */
 TEST(catalog_load_turns_backslash_n_into_a_newline) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NOINDI=None found.\\n\n");
@@ -90,7 +90,7 @@ TEST(catalog_load_turns_backslash_n_into_a_newline) {
 /* Vérifie qu'une double barre oblique inversée devient un seul caractère. */
 TEST(catalog_load_turns_a_double_backslash_into_a_single_one) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=a\\\\b\n");
@@ -102,7 +102,7 @@ TEST(catalog_load_turns_a_double_backslash_into_a_single_one) {
 /* Vérifie que le chargement conserve les espaces autour de la valeur. */
 TEST(catalog_load_keeps_leading_and_trailing_spaces) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "DETAIL= Details \n");
@@ -114,7 +114,7 @@ TEST(catalog_load_keeps_leading_and_trailing_spaces) {
 /* Vérifie que seul le premier signe égal sépare la clé de sa valeur. */
 TEST(catalog_load_splits_at_the_first_equals_sign_only) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=a=b\n");
@@ -126,7 +126,7 @@ TEST(catalog_load_splits_at_the_first_equals_sign_only) {
 /* Vérifie que les fins de ligne CRLF sont retirées des valeurs chargées. */
 TEST(catalog_load_strips_windows_line_endings) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=Unnamed\r\nDETAIL=Details\r\n");
@@ -148,7 +148,7 @@ TEST(catalog_load_reads_a_message_longer_than_the_initial_buffer) {
     expected[3000] = 0;
     const char *dir = fx_tempdir();
     fx_write(dir, "en.lang", content);
-    Catalog c = {0};
+    Catalog c TL_AUTOCLEAN(catalog_clear) = {0};
 
     // When
     catalog_load(&c, dir, "en");
@@ -160,7 +160,7 @@ TEST(catalog_load_reads_a_message_longer_than_the_initial_buffer) {
 /* Vérifie que les libellés des tags GEDCOM sont chargés par tag. */
 TEST(catalog_load_reads_tag_labels) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "TAG.NAME=Name\nTAG.BIRT=Birth\n");
@@ -173,7 +173,7 @@ TEST(catalog_load_reads_tag_labels) {
 /* Vérifie qu'un tag sans libellé dans le catalogue retourne NULL. */
 TEST(catalog_tag_returns_null_for_an_unknown_tag) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "TAG.NAME=Name\n");
@@ -185,7 +185,7 @@ TEST(catalog_tag_returns_null_for_an_unknown_tag) {
 /* Vérifie qu'un nom de tag trop long pour la table est ignoré. */
 TEST(catalog_load_ignores_a_tag_name_too_long_for_the_table) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "TAG.TOOLONGTAG=x\n");
@@ -197,7 +197,7 @@ TEST(catalog_load_ignores_a_tag_name_too_long_for_the_table) {
 /* Vérifie que les conversions printf autorisées sont acceptées pour chaque message. */
 TEST(catalog_load_accepts_the_conversion_a_message_is_meant_to_have) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "T_INDI= Individuals (%d) \nSEARCH=Search: %s\n");
@@ -210,7 +210,7 @@ TEST(catalog_load_accepts_the_conversion_a_message_is_meant_to_have) {
 /* Vérifie qu'une conversion incompatible avec le type attendu est rejetée. */
 TEST(catalog_load_rejects_a_conversion_of_the_wrong_type) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "T_INDI=%s\nSEARCH=%d\n");
@@ -223,7 +223,7 @@ TEST(catalog_load_rejects_a_conversion_of_the_wrong_type) {
 /* Vérifie que la conversion dangereuse %n est rejetée. */
 TEST(catalog_load_rejects_a_dangerous_conversion) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "SEARCH=%n\n");
@@ -235,7 +235,7 @@ TEST(catalog_load_rejects_a_dangerous_conversion) {
 /* Vérifie qu'un message contenant deux conversions est rejeté. */
 TEST(catalog_load_rejects_a_message_with_two_conversions) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "T_INDI=%d %d\n");
@@ -247,7 +247,7 @@ TEST(catalog_load_rejects_a_message_with_two_conversions) {
 /* Vérifie qu'une conversion est rejetée pour un message sans argument printf. */
 TEST(catalog_load_rejects_a_conversion_in_a_message_that_takes_none) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=100%\nDETAIL=%s\n");
@@ -260,7 +260,7 @@ TEST(catalog_load_rejects_a_conversion_in_a_message_that_takes_none) {
 /* Vérifie qu'un pourcentage échappé est accepté comme texte littéral. */
 TEST(catalog_load_accepts_an_escaped_percent_sign) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
 
     // When
     load_en(&c, "NONAME=100%%\n");
@@ -272,7 +272,7 @@ TEST(catalog_load_accepts_an_escaped_percent_sign) {
 /* Vérifie qu'une nouvelle valeur remplace celle déjà chargée pour la même clé. */
 TEST(catalog_load_replaces_a_value_loaded_earlier) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
     const char *dir = load_en(&c, "NONAME=First\n");
     fx_write(dir, "fr.lang", "NONAME=Second\n");
 
@@ -286,7 +286,7 @@ TEST(catalog_load_replaces_a_value_loaded_earlier) {
 /* Vérifie qu'un chargement complémentaire conserve les clés qu'il ne redéfinit pas. */
 TEST(catalog_load_keeps_values_the_second_file_does_not_define) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
     const char *dir = load_en(&c, "NONAME=First\nDETAIL=Details\n");
     fx_write(dir, "fr.lang", "NONAME=Second\n");
 
@@ -300,7 +300,7 @@ TEST(catalog_load_keeps_values_the_second_file_does_not_define) {
 /* Vérifie qu'un fichier de langue manquant ne modifie pas le catalogue existant. */
 TEST(catalog_load_leaves_the_catalog_untouched_when_the_file_is_missing) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
     const char *dir = load_en(&c, "NONAME=Unnamed\n");
 
     // When
@@ -313,7 +313,7 @@ TEST(catalog_load_leaves_the_catalog_untouched_when_the_file_is_missing) {
 /* Vérifie que catalog_clear libère et efface les messages et libellés de tags. */
 TEST(catalog_clear_removes_every_message_and_tag) {
     // Given
-    Catalog c;
+    Catalog c TL_AUTOCLEAN(catalog_clear);
     load_en(&c, "NONAME=Unnamed\nTAG.NAME=Name\n");
 
     // When

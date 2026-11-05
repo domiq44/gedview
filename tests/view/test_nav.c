@@ -18,7 +18,7 @@ static const char *TREE = "0 @I1@ INDI\n1 NAME Alice/ALPHA/\n"
 /* Vérifie que l'état initial affiche la liste des individus en haut. */
 TEST(nav_init_starts_on_the_individuals_list_at_the_top) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
 
     // When
     nav_init(&nav);
@@ -32,9 +32,9 @@ TEST(nav_init_starts_on_the_individuals_list_at_the_top) {
 /* Vérifie que nav_count reflète la taille de la liste de la vue active. */
 TEST(nav_count_is_the_size_of_the_displayed_list) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -50,9 +50,9 @@ TEST(nav_count_is_the_size_of_the_displayed_list) {
 /* Vérifie que nav_current retourne l'enregistrement sélectionné. */
 TEST(nav_current_returns_the_selected_record) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
 
@@ -66,9 +66,9 @@ TEST(nav_current_returns_the_selected_record) {
 /* Vérifie que nav_current retourne NULL lorsque la liste active est vide. */
 TEST(nav_current_returns_null_when_the_list_is_empty) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_NOTE);
 
@@ -82,9 +82,9 @@ TEST(nav_current_returns_null_when_the_list_is_empty) {
 /* Vérifie qu'une sélection hors limites est ramenée au dernier élément. */
 TEST(nav_current_clamps_a_selection_beyond_the_end_of_the_list) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 99;
 
@@ -100,9 +100,9 @@ TEST(nav_current_clamps_a_selection_beyond_the_end_of_the_list) {
 /* Vérifie qu'un déplacement vers le bas sélectionne l'élément suivant. */
 TEST(nav_move_down_selects_the_next_item) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -116,9 +116,9 @@ TEST(nav_move_down_selects_the_next_item) {
 /* Vérifie qu'un déplacement vers le bas ne dépasse pas le dernier élément. */
 TEST(nav_move_down_stops_at_the_last_item) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 2;
     Detail d = {0};
@@ -133,9 +133,9 @@ TEST(nav_move_down_stops_at_the_last_item) {
 /* Vérifie qu'un déplacement vers le haut ne précède pas le premier élément. */
 TEST(nav_move_up_stops_at_the_first_item) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -149,9 +149,9 @@ TEST(nav_move_up_stops_at_the_first_item) {
 /* Vérifie qu'un grand delta place la sélection à la borne correspondante. */
 TEST(nav_move_by_a_huge_delta_jumps_to_the_ends) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -168,9 +168,9 @@ TEST(nav_move_by_a_huge_delta_jumps_to_the_ends) {
 /* Vérifie qu'un déplacement dans une liste vide conserve la sélection à zéro. */
 TEST(nav_move_on_an_empty_list_keeps_the_selection_at_zero) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_NOTE);
     Detail d = {0};
@@ -185,9 +185,9 @@ TEST(nav_move_on_an_empty_list_keeps_the_selection_at_zero) {
 /* Vérifie qu'un déplacement dans la liste remet la sélection du détail à zéro. */
 TEST(nav_move_in_the_list_resets_the_detail_position) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.det_sel = 4;
     nav.det_top = 2;
@@ -204,9 +204,9 @@ TEST(nav_move_in_the_list_resets_the_detail_position) {
 /* Vérifie qu'un déplacement dans le détail ne change pas la sélection de liste. */
 TEST(nav_move_in_the_detail_moves_the_detail_selection_only) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     Detail d = {.count = 5};
@@ -222,9 +222,9 @@ TEST(nav_move_in_the_detail_moves_the_detail_selection_only) {
 /* Vérifie que la sélection du détail ne dépasse pas sa dernière ligne. */
 TEST(nav_move_in_the_detail_stops_at_the_last_line) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     Detail d = {.count = 5};
@@ -241,7 +241,7 @@ TEST(nav_move_in_the_detail_stops_at_the_last_line) {
 /* Vérifie que nav_set_kind active la liste correspondant au type demandé. */
 TEST(nav_set_kind_switches_the_displayed_list) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -254,9 +254,9 @@ TEST(nav_set_kind_switches_the_displayed_list) {
 /* Vérifie que revenir à une liste restaure sa sélection et son défilement précédents. */
 TEST(nav_set_kind_restores_the_position_of_a_list_when_coming_back) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 2;
     nav.top = 1;
@@ -275,7 +275,7 @@ TEST(nav_set_kind_restores_the_position_of_a_list_when_coming_back) {
 /* Vérifie que changer de type rend le focus à la liste. */
 TEST(nav_set_kind_gives_the_focus_back_to_the_list) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
 
@@ -289,7 +289,7 @@ TEST(nav_set_kind_gives_the_focus_back_to_the_list) {
 /* Vérifie qu'un changement de type réinitialise la sélection et le défilement du détail. */
 TEST(nav_set_kind_resets_the_detail_position) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.det_sel = 3;
     nav.det_top = 1;
@@ -305,7 +305,7 @@ TEST(nav_set_kind_resets_the_detail_position) {
 /* Vérifie que chaque bascule de focus alterne entre liste et détail. */
 TEST(nav_toggle_focus_alternates_between_list_and_detail) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -323,9 +323,9 @@ TEST(nav_toggle_focus_alternates_between_list_and_detail) {
 /* Vérifie qu'Entrée depuis la liste donne le focus au panneau de détail. */
 TEST(nav_activate_from_the_list_gives_the_focus_to_the_detail) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
 
@@ -339,9 +339,9 @@ TEST(nav_activate_from_the_list_gives_the_focus_to_the_detail) {
 /* Vérifie qu'activer un lien d'individu ouvre sa liste et le sélectionne. */
 TEST(nav_activate_on_a_link_to_an_individual_selects_that_individual) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     Line lines[2] = {
@@ -363,9 +363,9 @@ TEST(nav_activate_on_a_link_to_an_individual_selects_that_individual) {
 /* Vérifie qu'un lien vers un autre type ouvre la liste correspondante. */
 TEST(nav_activate_on_a_link_to_another_kind_switches_to_that_list) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     Line lines[1] = {{"FAMS: @F1@", "@F1@", LINE_LINK_RECORD, 0, 0}};
@@ -383,9 +383,9 @@ TEST(nav_activate_on_a_link_to_another_kind_switches_to_that_list) {
 /* Vérifie qu'activer une ligne sans lien ne modifie pas la navigation. */
 TEST(nav_activate_on_a_line_without_link_changes_nothing) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     nav.sel = 1;
@@ -403,9 +403,9 @@ TEST(nav_activate_on_a_line_without_link_changes_nothing) {
 /* Vérifie qu'un lien vers un XREF inconnu ne modifie pas la navigation. */
 TEST(nav_activate_on_a_link_to_an_unknown_record_changes_nothing) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     nav.sel = 1;
@@ -423,9 +423,9 @@ TEST(nav_activate_on_a_link_to_an_unknown_record_changes_nothing) {
 /* Vérifie que suivre un lien puis revenir restaure la position de la liste quittée. */
 TEST(nav_activate_keeps_the_position_of_the_list_it_leaves) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
     nav.focus_detail = 1;
@@ -443,9 +443,9 @@ TEST(nav_activate_keeps_the_position_of_the_list_it_leaves) {
 /* Vérifie que le retour arrière restaure les enregistrements visités et leur lien sélectionné. */
 TEST(nav_back_restores_each_linked_record_in_order) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.focus_detail = 1;
     nav.det_sel = 1;
@@ -478,9 +478,9 @@ TEST(nav_back_restores_each_linked_record_in_order) {
 /* Vérifie qu'un retour arrière sans visite de lien ne change pas la navigation. */
 TEST(nav_back_does_nothing_when_history_is_empty) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
 
@@ -497,9 +497,9 @@ TEST(nav_back_does_nothing_when_history_is_empty) {
 /* Vérifie que le retour arrière restaure l'individu précédent après un déplacement dans la liste. */
 TEST(nav_back_restores_the_previous_list_selection) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     Detail d = {0};
     nav_move(&nav, &db, &d, 1);
@@ -516,9 +516,9 @@ TEST(nav_back_restores_the_previous_list_selection) {
 /* Vérifie que le retour arrière restaure la vue et la sélection quittées. */
 TEST(nav_back_restores_the_previous_view) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
 
@@ -538,9 +538,9 @@ TEST(nav_back_restores_the_previous_view) {
 /* Vérifie que la recherche sélectionne le prochain libellé contenant le texte demandé. */
 TEST(nav_search_selects_the_next_item_whose_label_contains_the_text) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -553,9 +553,9 @@ TEST(nav_search_selects_the_next_item_whose_label_contains_the_text) {
 /* Vérifie qu'une recherche dans la vue Individus trouve aussi le XREF d'un individu. */
 TEST(nav_search_matches_an_individual_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -569,12 +569,12 @@ TEST(nav_search_matches_an_individual_xref) {
 /* Vérifie qu'une recherche dans la vue Citation trouve le XREF de la source citée. */
 TEST(nav_search_matches_a_citation_source_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Amy/ALPHA/\n1 SOUR @X1@\n"
                 "0 @I2@ INDI\n1 NAME Zoe/ZULU/\n1 SOUR @Y2@\n"
                 "0 @X1@ SOUR\n1 TITL Alpha source\n0 @Y2@ SOUR\n1 TITL Zulu source\n",
                 &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_CITA);
 
@@ -595,9 +595,9 @@ static const char *REPO_TREE = "0 @I1@ INDI\n1 NAME Amy/ALPHA/\n1 SOUR @S1@\n"
 /* Vérifie que la vue Source trouve une source par le XREF de son dépôt. */
 TEST(nav_search_finds_a_source_by_its_repository_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(REPO_TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_SRC);
 
@@ -611,9 +611,9 @@ TEST(nav_search_finds_a_source_by_its_repository_xref) {
 /* Vérifie que la vue Source trouve une source par le nom de son dépôt. */
 TEST(nav_search_finds_a_source_by_its_repository_name) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(REPO_TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_SRC);
 
@@ -627,9 +627,9 @@ TEST(nav_search_finds_a_source_by_its_repository_name) {
 /* Vérifie que la vue Citation trouve une citation par le nom du dépôt de la source citée. */
 TEST(nav_search_finds_a_citation_by_the_repository_name_of_its_source) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(REPO_TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_CITA);
 
@@ -643,9 +643,9 @@ TEST(nav_search_finds_a_citation_by_the_repository_name_of_its_source) {
 /* Vérifie que la vue Citation trouve une citation par le XREF du dépôt de la source citée. */
 TEST(nav_search_finds_a_citation_by_the_repository_xref_of_its_source) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(REPO_TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_CITA);
 
@@ -659,9 +659,9 @@ TEST(nav_search_finds_a_citation_by_the_repository_xref_of_its_source) {
 /* Vérifie que la vue Individus ignore les dépôts : seule la vue Source ou Citation les cherche. */
 TEST(nav_search_does_not_use_repositories_in_the_individual_view) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(REPO_TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -674,9 +674,9 @@ TEST(nav_search_does_not_use_repositories_in_the_individual_view) {
 /* Vérifie que la recherche ne distingue pas les majuscules des minuscules. */
 TEST(nav_search_ignores_case) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -690,9 +690,9 @@ TEST(nav_search_ignores_case) {
 TEST(nav_search_ignores_case_for_utf8_text) {
     // Given
     ASSERT_NOT_NULL(setlocale(LC_CTYPE, "C.UTF-8"));
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Émile/LAMBERT/\n0 @I2@ INDI\n1 NAME Zoe/ALPHA/\n", &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -705,9 +705,9 @@ TEST(nav_search_ignores_case_for_utf8_text) {
 /* Vérifie que la recherche reprend au début après avoir atteint la fin de la liste. */
 TEST(nav_search_wraps_around_to_the_beginning_of_the_list) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 2;
 
@@ -721,9 +721,9 @@ TEST(nav_search_wraps_around_to_the_beginning_of_the_list) {
 /* Vérifie que la recherche commence après l'élément actuellement sélectionné. */
 TEST(nav_search_starts_after_the_current_selection) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 0;
 
@@ -737,9 +737,9 @@ TEST(nav_search_starts_after_the_current_selection) {
 /* Vérifie que le terme mémorisé avance au résultat suivant puis reboucle sans nouvelle saisie. */
 TEST(nav_search_next_advances_and_wraps_with_the_saved_term) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When
@@ -760,9 +760,9 @@ TEST(nav_search_next_advances_and_wraps_with_the_saved_term) {
 /* Vérifie qu'une recherche sans résultat laisse la sélection inchangée. */
 TEST(nav_search_keeps_the_selection_when_nothing_matches) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
 
@@ -776,9 +776,9 @@ TEST(nav_search_keeps_the_selection_when_nothing_matches) {
 /* Vérifie qu'une chaîne de recherche vide ne change pas la sélection. */
 TEST(nav_search_ignores_an_empty_text) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 1;
 
@@ -792,9 +792,9 @@ TEST(nav_search_ignores_an_empty_text) {
 /* Vérifie que rechercher dans une liste vide ne modifie pas la navigation. */
 TEST(nav_search_on_an_empty_list_does_nothing) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_NOTE);
 
@@ -808,9 +808,9 @@ TEST(nav_search_on_an_empty_list_does_nothing) {
 /* Vérifie que la recherche porte sur les libellés du type actuellement affiché. */
 TEST(nav_search_searches_the_labels_of_the_displayed_kind) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_SRC);
 
@@ -824,9 +824,9 @@ TEST(nav_search_searches_the_labels_of_the_displayed_kind) {
 /* Vérifie qu'un résultat de recherche remet la position du détail à zéro. */
 TEST(nav_search_resets_the_detail_position_on_a_match) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database(TREE, &db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.det_sel = 3;
     nav.det_top = 2;
@@ -844,7 +844,7 @@ TEST(nav_search_resets_the_detail_position_on_a_match) {
 /* Vérifie que le défilement descend pour garder la sélection de liste visible. */
 TEST(nav_scroll_moves_the_window_down_to_keep_the_selection_visible) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.sel = 10;
     Detail d = {.count = 1};
@@ -859,7 +859,7 @@ TEST(nav_scroll_moves_the_window_down_to_keep_the_selection_visible) {
 /* Vérifie que le défilement remonte pour garder la sélection de liste visible. */
 TEST(nav_scroll_moves_the_window_up_to_keep_the_selection_visible) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.top = 8;
     nav.sel = 3;
@@ -875,7 +875,7 @@ TEST(nav_scroll_moves_the_window_up_to_keep_the_selection_visible) {
 /* Vérifie que le défilement ne bouge pas si la sélection est déjà visible. */
 TEST(nav_scroll_leaves_the_window_alone_when_the_selection_is_visible) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.top = 4;
     nav.sel = 6;
@@ -891,7 +891,7 @@ TEST(nav_scroll_leaves_the_window_alone_when_the_selection_is_visible) {
 /* Vérifie que le défilement du détail garde sa ligne sélectionnée à l'écran. */
 TEST(nav_scroll_keeps_the_detail_selection_visible) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.det_sel = 9;
     Detail d = {.count = 20};
@@ -906,7 +906,7 @@ TEST(nav_scroll_keeps_the_detail_selection_visible) {
 /* Vérifie que la sélection du détail est ramenée dans les limites de ses lignes. */
 TEST(nav_scroll_clamps_the_detail_selection_to_the_number_of_lines) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.det_sel = 9;
     Detail d = {.count = 3};
@@ -921,7 +921,7 @@ TEST(nav_scroll_clamps_the_detail_selection_to_the_number_of_lines) {
 /* Vérifie que l'absence de lignes remet la sélection du détail à zéro. */
 TEST(nav_scroll_resets_the_detail_selection_when_there_are_no_lines) {
     // Given
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav.det_sel = 4;
     Detail d = {.count = 0};

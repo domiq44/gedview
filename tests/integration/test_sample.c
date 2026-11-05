@@ -15,6 +15,7 @@
 static Node *load_sample(Database *db) {
     Node *root = gedcom_parse(SAMPLE);
     if (!root) tl_fail(__FILE__, __LINE__, "cannot read %s (run tests from the project root)", SAMPLE);
+    fx_track_root(root);
     if (!db_build(db, root)) tl_fail(__FILE__, __LINE__, "duplicate xref in %s", SAMPLE);
     return root;
 }
@@ -36,7 +37,7 @@ static int has_external_link(const Detail *d, LineLinkKind kind, const char *tar
 /* Vérifie que le fichier d'exemple fournit au moins un enregistrement pour chaque vue. */
 TEST(sample_file_contains_records_for_every_view) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     load_sample(&db);
@@ -54,7 +55,7 @@ TEST(sample_file_contains_records_for_every_view) {
 /* Vérifie que chaque type autre qu'un individu sans nom a un libellé non vide. */
 TEST(every_record_of_the_sample_has_a_non_empty_label) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
 
     for (int k = 0; k < K_COUNT; k++)
@@ -71,9 +72,9 @@ TEST(every_record_of_the_sample_has_a_non_empty_label) {
 /* Vérifie que chaque enregistrement de l'exemple produit un détail affichable. */
 TEST(every_record_of_the_sample_can_be_rendered_in_the_detail_panel) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Detail d = {0};
+    Detail d TL_AUTOCLEAN(detail_destroy) = {0};
 
     for (int k = 0; k < K_COUNT; k++)
         for (int i = 0; i < db.lists[k].count; i++) {
@@ -83,15 +84,15 @@ TEST(every_record_of_the_sample_can_be_rendered_in_the_detail_panel) {
             // Then
             ASSERT_TRUE(d.count >= 2);
         }
-    free(d.lines);
+    detail_destroy(&d);
 }
 
 /* Vérifie que chaque lien généré par un détail cible un enregistrement existant. */
 TEST(every_link_shown_in_the_detail_panel_leads_to_an_existing_record) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Detail d = {0};
+    Detail d TL_AUTOCLEAN(detail_destroy) = {0};
 
     for (int k = 0; k < K_COUNT; k++)
         for (int i = 0; i < db.lists[k].count; i++) {
@@ -103,15 +104,15 @@ TEST(every_link_shown_in_the_detail_panel_leads_to_an_existing_record) {
                 if (d.lines[l].link[0] && d.lines[l].link_kind == LINE_LINK_RECORD)
                     ASSERT_NOT_NULL(db_find(&db, d.lines[l].link));
         }
-    free(d.lines);
+    detail_destroy(&d);
 }
 
 /* Vérifie que le GEDCOM d'exemple expose ses URL de note et ses fichiers média comme liens distincts. */
 TEST(sample_notes_and_media_have_openable_external_links) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Detail d = {0};
+    Detail d TL_AUTOCLEAN(detail_destroy) = {0};
     const Node *note = db_find(&db, "@N1@");
     const Node *media = db_find(&db, "@M1@");
 
@@ -126,17 +127,17 @@ TEST(sample_notes_and_media_have_openable_external_links) {
     ASSERT_TRUE(has_http);
     ASSERT_TRUE(has_external_link(&d, LINE_LINK_MEDIA, "media/portrait-famille.svg"));
     ASSERT_TRUE(has_external_link(&d, LINE_LINK_MEDIA, "media/acte-naissance.pdf"));
-    free(d.lines);
+    detail_destroy(&d);
 }
 
 /* Vérifie qu'un lien vers une famille puis le retour restaure l'individu initial. */
 TEST(browsing_from_an_individual_to_a_family_and_back_works_end_to_end) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
-    Detail d = {0};
+    Detail d TL_AUTOCLEAN(detail_destroy) = {0};
     const Node *start = NULL;
     int link_line = -1;
     for (int i = 0; i < db.lists[K_INDI].count && link_line < 0; i++) {
@@ -163,19 +164,19 @@ TEST(browsing_from_an_individual_to_a_family_and_back_works_end_to_end) {
     // Then
     ASSERT_EQ_INT(K_FAM, kind_after_follow);
     ASSERT_TRUE(nav_current(&nav, &db) == start);
-    free(d.lines);
+    detail_destroy(&d);
 }
 
 /* Vérifie que le suivi d'une citation vers sa source puis le retour restaure la citation. */
 TEST(browsing_from_a_citation_to_its_source_and_back_works_end_to_end) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
     nav_set_kind(&nav, K_CITA);
     const Node *citation = nav_current(&nav, &db);
-    Detail d = {0};
+    Detail d TL_AUTOCLEAN(detail_destroy) = {0};
     detail_build(&d, &db, K_CITA, citation);
     const Node *source = NULL;
     int link_line = -1;
@@ -210,9 +211,9 @@ TEST(browsing_from_a_citation_to_its_source_and_back_works_end_to_end) {
 /* Vérifie que le détail d'une famille contient des liens vers ses membres. */
 TEST(a_family_detail_links_to_its_members) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Detail d = {0};
+    Detail d TL_AUTOCLEAN(detail_destroy) = {0};
     const Node *family = NULL;
     const Node *husband = NULL;
     for (int i = 0; i < db.lists[K_FAM].count && !husband; i++) {
@@ -226,15 +227,15 @@ TEST(a_family_detail_links_to_its_members) {
 
     // Then
     ASSERT_TRUE(has_link(&d, husband->value));
-    free(d.lines);
+    detail_destroy(&d);
 }
 
 /* Vérifie que rechercher un patronyme de l'exemple sélectionne le bon individu. */
 TEST(searching_a_name_of_the_sample_selects_the_matching_individual) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     load_sample(&db);
-    Nav nav;
+    Nav nav TL_AUTOCLEAN(nav_destroy);
     nav_init(&nav);
 
     // When

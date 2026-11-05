@@ -13,10 +13,14 @@
 
 static char dirs[MAX_ITEMS][PATH_MAX];
 static char files[MAX_ITEMS][PATH_MAX + 64];
+static Node *roots[MAX_ITEMS];
 static int ndirs, nfiles, registered;
+static int nroots;
 
-/* Supprime les fichiers temporaires puis les dossiers créés par ce processus de test. */
+/* Libère les arbres suivis puis supprime les fichiers et dossiers temporaires. */
 static void cleanup(void) {
+    for (int i = 0; i < nroots; i++)
+        gedcom_free(roots[i]);
     for (int i = 0; i < nfiles; i++)
         unlink(files[i]);
     for (int i = ndirs - 1; i >= 0; i--)
@@ -39,6 +43,24 @@ const char *fx_tempdir(void) {
     snprintf(dirs[ndirs], sizeof dirs[ndirs], "%s/gedview-test-XXXXXX", base && *base ? base : "/tmp");
     if (!mkdtemp(dirs[ndirs])) tl_fail(__FILE__, __LINE__, "mkdtemp failed");
     return dirs[ndirs++];
+}
+
+/* Ajoute root au nettoyage final du processus de test. */
+void fx_track_root(Node *root) {
+    if (!root) return;
+    ensure_cleanup_registered();
+    if (nroots == MAX_ITEMS) tl_fail(__FILE__, __LINE__, "too many parsed roots");
+    roots[nroots++] = root;
+}
+
+/* Libère root immédiatement et empêche le nettoyage final de le libérer à nouveau. */
+void fx_free_root(Node *root) {
+    for (int i = 0; i < nroots; i++)
+        if (roots[i] == root) {
+            roots[i] = NULL;
+            break;
+        }
+    gedcom_free(root);
 }
 
 /* Écrit une fixture dans dir et la consigne pour le nettoyage final. */
@@ -64,6 +86,7 @@ Node *fx_parse(const char *gedcom_text) {
     snprintf(path, sizeof path, "%s/%s", dir, name);
     Node *root = gedcom_parse(path);
     if (!root) tl_fail(__FILE__, __LINE__, "gedcom_parse failed for %s", path);
+    fx_track_root(root);
     return root;
 }
 

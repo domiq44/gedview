@@ -24,7 +24,7 @@ flowchart LR
     UI --> External
 ```
 
-`core/` ne dépend ni de ncurses ni des traductions. `view/` transforme les données en listes, lignes de détail et état de navigation. `ui/` adapte ces éléments au terminal; ses actions d'interface sont injectées dans `input.c` via `InputHooks`, ce qui permet de tester le routage sans ncurses.
+`core/` ne dépend ni de ncurses ni des traductions. `view/` transforme les données en listes, lignes de détail et état de navigation. `ui/` adapte ces éléments au terminal; ses actions d'interface sont injectées dans `input.c` via `InputHooks`, ce qui permet de tester le routage sans ncurses. La validation et la résolution des cibles externes sont séparées du lancement `xdg-open` et testées sans démarrer de processus externe.
 
 ## Organisation des fichiers
 
@@ -49,7 +49,8 @@ src/
         screen.c/h     fenêtres, dessin, saisie de texte (ncurses)
         help.c/h       page d'aide (ncurses)
         input.c/h      touches -> actions ; les actions d'interface sont injectées (`InputHooks`), donc testable
-        external.c/h   ouverture sans shell des URL HTTP(S) et fichiers PDF/images via xdg-open
+        external.c/h   lancement sans shell de xdg-open
+        external_target.c/h validation des URL et résolution canonique des chemins média
 lang/              un fichier de traduction par langue
 media/             image SVG et PDF d'exemple référencés par gedcom-test.ged
 scripts/           coverage.sh (résumé gcov), gedview-open et gedview.desktop.in (entrée de menu)

@@ -7,7 +7,7 @@ TEST(db_build_groups_level_zero_records_by_kind) {
     // Given
     const char *text = "0 HEAD\n0 @I1@ INDI\n0 @I2@ INDI\n0 @F1@ FAM\n0 @S1@ SOUR\n"
                        "0 @R1@ REPO\n0 @M1@ OBJE\n0 @N1@ NOTE\n0 @N2@ NOTE\n0 TRLR\n";
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     fx_database(text, &db);
@@ -25,7 +25,7 @@ TEST(db_build_groups_level_zero_records_by_kind) {
 TEST(db_build_produces_empty_lists_when_file_has_no_records) {
     // Given
     const char *text = "0 HEAD\n0 TRLR\n";
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     fx_database(text, &db);
@@ -40,7 +40,7 @@ TEST(db_build_collects_nested_source_citations_but_not_source_records_or_inline_
     // Given
     Node *root = fx_parse("0 @I1@ INDI\n1 BIRT\n2 SOUR @X1@\n3 PAGE 10\n1 SOUR Inline source\n"
                           "0 @X1@ SOUR\n1 TITL Register\n");
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     db_build(&db, root);
@@ -54,7 +54,7 @@ TEST(db_build_collects_nested_source_citations_but_not_source_records_or_inline_
 TEST(db_build_sorts_individuals_by_display_label) {
     // Given
     const char *text = "0 @I1@ INDI\n1 NAME Zoe/ADAMS/\n0 @I2@ INDI\n1 NAME Alan/BAKER/\n";
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     fx_database(text, &db);
@@ -71,7 +71,7 @@ TEST(db_build_sorts_families_by_display_label) {
                        "0 @I3@ INDI\n1 NAME Bob/BRAVO/\n"
                        "0 @F2@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n"
                        "0 @F1@ FAM\n1 HUSB @I3@\n1 WIFE @I2@\n";
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     fx_database(text, &db);
@@ -90,7 +90,7 @@ TEST(db_build_sorts_other_views_by_display_label) {
                        "0 @R2@ REPO\n1 NAME Zebra Repository\n0 @R1@ REPO\n1 NAME Alpha Repository\n"
                        "0 @M2@ OBJE\n1 TITL Zebra Media\n0 @M1@ OBJE\n1 TITL Alpha Media\n"
                        "0 @N2@ NOTE Zebra Note\n0 @N1@ NOTE Alpha Note\n";
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     fx_database(text, &db);
@@ -106,7 +106,7 @@ TEST(db_build_sorts_other_views_by_display_label) {
 /* Vérifie que db_find retrouve un enregistrement connu quel que soit son type. */
 TEST(db_find_returns_the_record_whatever_its_kind) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n0 @S1@ SOUR\n0 @N1@ NOTE\n", &db);
 
     // When
@@ -120,7 +120,7 @@ TEST(db_find_returns_the_record_whatever_its_kind) {
 /* Vérifie qu'un identifiant absent de l'index XREF retourne NULL. */
 TEST(db_find_returns_null_for_an_unknown_xref) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n", &db);
 
     // When
@@ -133,7 +133,7 @@ TEST(db_find_returns_null_for_an_unknown_xref) {
 /* Vérifie qu'un XREF de type non pris en charge n'est pas retourné par db_find. */
 TEST(db_find_returns_null_for_an_unsupported_record_type) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @U1@ _CUSTOM\n", &db);
 
     // When
@@ -147,7 +147,7 @@ TEST(db_find_returns_null_for_an_unsupported_record_type) {
 TEST(db_find_does_not_resolve_a_duplicate_xref_ambiguously) {
     // Given
     Node *root = fx_parse("0 @X1@ _CUSTOM\n0 @X1@ INDI\n");
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
 
     // When
     int built = db_build(&db, root);
@@ -161,7 +161,7 @@ TEST(db_find_does_not_resolve_a_duplicate_xref_ambiguously) {
 /* Vérifie que db_destroy libère et remet à zéro tous les index de la base. */
 TEST(db_destroy_resets_the_database) {
     // Given
-    Database db;
+    Database db TL_AUTOCLEAN(db_destroy);
     fx_database("0 @I1@ INDI\n1 NAME Ada/LOVELACE/\n", &db);
 
     // When

@@ -227,6 +227,7 @@ TEST(parse_reports_the_number_of_ignored_lines) {
 
     // When
     Node *root = gedcom_parse_with_warnings(path, &ignored_lines);
+    fx_track_root(root);
 
     // Then
     ASSERT_NOT_NULL(root);
@@ -253,7 +254,7 @@ TEST(gedcom_free_releases_a_parsed_tree) {
     ASSERT_NOT_NULL(root->child->child->child);
 
     // When
-    gedcom_free(root);
+    fx_free_root(root);
 
     // Then
     // L'appel doit parcourir l'arbre sans erreur.
@@ -295,6 +296,7 @@ TEST(parse_ignores_a_deeper_line_after_a_malformed_parent_line) {
 
     // When
     Node *root = gedcom_parse_with_warnings(path, &ignored_lines);
+    fx_track_root(root);
 
     // Then
     ASSERT_NOT_NULL(root);

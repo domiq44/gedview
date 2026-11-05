@@ -9,7 +9,7 @@ framework maison `tests/support/testlib.h`.
 | --- | --- |
 | `make test` | compile et lance tous les tests (code de sortie ≠ 0 si un test échoue) |
 | `make coverage` | lance les tests instrumentés (`build-cov/`) et affiche la couverture gcov par fichier (`scripts/coverage.sh`) |
-| `make sanitize` | lance les tests avec AddressSanitizer et UndefinedBehaviorSanitizer (`build-asan/`; détection des fuites désactivée pour les fixtures à durée de vie processus) |
+| `make sanitize` | lance les tests avec AddressSanitizer, LeakSanitizer et UndefinedBehaviorSanitizer (`build-asan/`) |
 | `make lint` | `clang-tidy` sur `src/` et `tests/` (règles dans `.clang-tidy`) |
 | `make cppcheck` | `cppcheck` sur `src/` et `tests/` |
 | `make format` / `make format-check` | `clang-format` sur `src/` et `tests/` |
@@ -20,9 +20,8 @@ Les cibles vérifient elles-mêmes la présence de leur outil. Si un outil manqu
 l'indiquer à l'utilisateur avec la commande d'installation affichée.
 
 Les tests se lancent **depuis la racine du projet** (certains lisent `gedcom-test.ged` et `lang/`). Avant de
-terminer un travail : `make test`, `make lint`, `make cppcheck` et `make format-check` doivent passer. `make sanitize`
-ajoute les contrôles d'accès mémoire et de comportement indéfini; il nécessite un compilateur compatible avec
-`-fsanitize=address,undefined`.
+terminer un travail : `make test`, `make lint`, `make cppcheck`, `make format-check` et `make sanitize` doivent
+passer. La cible de sanitizers nécessite un compilateur compatible avec `-fsanitize=address,undefined`.
 
 ## Documentation
 
@@ -59,15 +58,16 @@ tests/
   core/             un fichier test_<module>.c par module de src/core/
   i18n/             idem pour src/i18n/
   view/             idem pour src/view/
-  ui/               input.c ; les actions externes sont remplacées par des doubles `InputHooks` en test
+  ui/               input.c et external_target.c ; le lancement externe est remplacé par des doubles `InputHooks`
   integration/      scénarios qui traversent plusieurs modules
 ```
 
 - Un fichier `tests/<dossier>/test_<module>.c` par module testé : il devient son propre exécutable
   (`build/tests/<dossier>/test_<module>`). Le `Makefile` détecte automatiquement les nouveaux fichiers.
 - `src/ui/screen.c` et `src/ui/help.c` (ncurses), `src/ui/external.c` (lance un programme système) et `src/main.c`
-  ne sont pas testés unitairement. Le routage vers l'ouverture externe est testé avec un double `InputHooks`.
-  Garder la logique métier dans `view/`, `core/` ou `input.c` pour qu'elle soit testable.
+  ne sont pas testés unitairement. La validation et la résolution des cibles sont isolées dans `external_target.c`
+  et testées par `tests/ui/test_external_target.c`; le routage est testé avec `InputHooks`. Garder la résolution
+  séparée du lancement des programmes pour qu'elle reste testable.
 - Les tests ne lient pas ncurses.
 - **Couverture** : viser les lignes et branches de logique ; les chemins d'échec d'allocation (`perror` + `exit`) sont
   volontairement non testés. Après un changement, vérifier avec `make coverage` qu'aucune nouvelle ligne de logique
@@ -124,8 +124,10 @@ Tout nouveau `TEST` doit être enregistré avec `RUN_TEST` dans le `main` du fic
 - `TEST(nom)`, `RUN_TEST(nom)`, `tl_suite("module")`, `tl_finish()`.
 - Assertions : `ASSERT_TRUE`, `ASSERT_FALSE`, `ASSERT_NULL`, `ASSERT_NOT_NULL`, `ASSERT_EQ_INT(attendu, obtenu)`,
   `ASSERT_EQ_STR(attendu, obtenu)` (gère `NULL`).
-- La première assertion en échec interrompt le test courant (`longjmp`), les autres tests continuent. Les
-  ressources allouées avant l'échec ne sont donc pas libérées : ne pas s'en soucier dans les tests.
+- La première assertion en échec interrompt le test courant (`longjmp`), les autres tests continuent. Les destructeurs
+  automatiques ne s'exécutent pas sur ce chemin; une suite qui échoue peut aussi signaler des fuites.
+- Les arbres retournés par `fx_parse` sont libérés à la fin du processus. Déclarer les bases, historiques, catalogues
+  et détails dynamiques avec `TL_AUTOCLEAN(destructeur)` afin que les scénarios réussis restent propres sous LSan.
 - Besoin d'une nouvelle assertion : l'ajouter à `testlib.h/.c` plutôt que de répéter un `if` + `tl_fail` dans les tests.
 
 ## Points d'attention

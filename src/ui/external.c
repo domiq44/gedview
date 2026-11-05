@@ -6,46 +6,11 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-/* Reconnaît uniquement les schémas HTTP et HTTPS, sans tenir compte de la casse. */
-static int is_http_url(const char *target) {
-    return !strncasecmp(target, "http://", 7) || !strncasecmp(target, "https://", 8);
-}
-
-/* Vérifie que le suffixe du chemin appartient aux formats média pris en charge. */
-static int is_supported_media(const char *path) {
-    static const char *const extensions[] = {
-        ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp", ".svg",
-    };
-    const char *slash = strrchr(path, '/');
-    const char *dot = strrchr(path, '.');
-    if (!dot || (slash && dot < slash)) return 0;
-    for (size_t i = 0; i < sizeof extensions / sizeof *extensions; i++)
-        if (!strcasecmp(dot, extensions[i])) return 1;
-    return 0;
-}
-
-/* Résout un média absolu ou relatif au GEDCOM et échoue si le chemin ne peut être canonisé. */
-static int resolve_media_path(const char *path, const char *gedcom_path, char resolved[PATH_MAX]) {
-    if (path[0] == '/') return realpath(path, resolved) != NULL;
-    if (!gedcom_path) return 0;
-
-    char gedcom[PATH_MAX];
-    if (!realpath(gedcom_path, gedcom)) return 0;
-    char *slash = strrchr(gedcom, '/');
-    if (!slash) return 0;
-    slash[1] = 0;
-
-    char candidate[PATH_MAX];
-    int written = snprintf(candidate, sizeof candidate, "%s%s", gedcom, path);
-    return written >= 0 && (size_t)written < sizeof candidate && realpath(candidate, resolved) != NULL;
-}
+#include "ui/external_target.h"
 
 /* Détache xdg-open du terminal tout en récoltant le premier processus enfant. */
 static void launch(const char *target) {
@@ -73,13 +38,11 @@ static void launch(const char *target) {
 
 /* Filtre les cibles selon leur type puis démarre xdg-open pour les URL ou médias valides. */
 void external_open(const char *target, LineLinkKind kind, const char *gedcom_path) {
-    if (!target || !*target) return;
-    if (is_http_url(target)) {
+    char resolved[PATH_MAX];
+    ExternalTargetType type = external_target_resolve(target, kind, gedcom_path, resolved, sizeof resolved);
+    if (type == EXTERNAL_TARGET_URL) {
         launch(target);
         return;
     }
-    if (kind != LINE_LINK_MEDIA || !is_supported_media(target)) return;
-
-    char resolved[PATH_MAX];
-    if (resolve_media_path(target, gedcom_path, resolved)) launch(resolved);
+    if (type == EXTERNAL_TARGET_MEDIA) launch(resolved);
 }

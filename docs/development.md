@@ -17,9 +17,9 @@ Pour les outils de développement, Fedora fournit `cppcheck` et `clang-tools-ext
 | `make` | Compile `gedview` (objets dans `build/`) |
 | `make test` | Compile et lance les tests unitaires et d'intégration |
 | `make coverage` | Lance les tests instrumentés dans `build-cov/` et résume la couverture gcov |
-| `make sanitize` | Lance les tests avec AddressSanitizer et UndefinedBehaviorSanitizer dans `build-asan/` |
-| `make lint` | Exécute `clang-tidy` sur `src/` et `tests/` (règles dans `.clang-tidy`) |
-| `make cppcheck` | Exécute l'analyse statique sur `src/` et `tests/` |
+| `make sanitize` | Recompile et lance les tests instrumentés par ASan, LSan et UBSan dans `build-asan/` |
+| `make lint` | Analyse statique avec `clang-tidy` sur `src/` et `tests/` |
+| `make cppcheck` | Analyse statique complémentaire avec `cppcheck` sur `src/` et `tests/` |
 | `make format-check` | Vérifie le format sans modifier les fichiers (`.clang-format`) |
 | `make format` | Reformate les sources et tests avec le style de `.clang-format` |
 | `make check-tools` | Vérifie la présence de GCC, gcov, ncursesw, cppcheck, clang-format et clang-tidy |
@@ -30,9 +30,21 @@ Pour les outils de développement, Fedora fournit `cppcheck` et `clang-tools-ext
 
 Les tests s'exécutent depuis la racine du dépôt. Les conventions détaillées, la structure des tests et les chemins ncurses volontairement exclus sont décrits dans [AGENTS.md](../AGENTS.md).
 
-`make sanitize` utilise le compilateur configuré par `CC` avec `-fsanitize=address,undefined`. La détection des
-fuites est désactivée pour cette cible, car plusieurs fixtures gardent leurs arbres et bases en mémoire jusqu'à la
-fin du processus; les erreurs d'accès mémoire et de comportement indéfini restent fatales.
+`make lint` applique les contrôles clang-tidy définis dans `.clang-tidy` : il signale des défauts potentiels et des
+écarts aux règles du projet sans exécuter le programme. `make cppcheck` examine aussi le code sans l'exécuter, avec
+des contrôles de défauts probables, de style, de performance et de portabilité.
+
+`make sanitize` instrumente le code exécuté par les tests et arrête la suite au premier diagnostic : AddressSanitizer
+(ASan) repère notamment les accès hors limites, les use-after-free et les doubles libérations; LeakSanitizer (LSan)
+signale les allocations encore vivantes à la fin du processus; UndefinedBehaviorSanitizer (UBSan) détecte plusieurs
+formes de comportement indéfini, comme certains débordements signés, décalages invalides ou accès mal alignés.
+Ces contrôles ne couvrent que les chemins effectivement exercés par les tests. La cible utilise `CC` avec
+`-fsanitize=address,undefined` et exige un compilateur compatible. Les fixtures libèrent les arbres GEDCOM à la fin
+du processus; les ressources locales sont détruites automatiquement avec `TL_AUTOCLEAN`.
+
+La classification des URL et la résolution canonique des chemins média sont testées dans
+`tests/ui/test_external_target.c`; ces tests n'exécutent pas `xdg-open`. Le lancement réel reste à vérifier
+manuellement dans un environnement de bureau.
 
 ## Ajouter un type d'enregistrement
 

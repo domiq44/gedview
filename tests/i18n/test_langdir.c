@@ -6,6 +6,12 @@
 #include "support/fixtures.h"
 #include "support/testlib.h"
 
+/* Libère les codes alloués par langdir_list après les assertions du scénario. */
+static void free_codes(char **codes, int count) {
+    for (int i = 0; i < count; i++)
+        free(codes[i]);
+}
+
 /* Vérifie que GEDVIEW_LANG_DIR est utilisé lorsqu'il contient la langue de base. */
 TEST(langdir_find_returns_the_directory_given_by_the_environment) {
     // Given
@@ -67,6 +73,7 @@ TEST(langdir_list_returns_the_language_codes_in_alphabetical_order) {
     ASSERT_EQ_STR("de", codes[0]);
     ASSERT_EQ_STR("en", codes[1]);
     ASSERT_EQ_STR("fr", codes[2]);
+    free_codes(codes, n);
 }
 
 /* Vérifie que les fichiers sans suffixe .lang ne sont pas listés comme langues. */
@@ -85,6 +92,7 @@ TEST(langdir_list_ignores_files_that_are_not_lang_files) {
     // Then
     ASSERT_EQ_INT(1, n);
     ASSERT_EQ_STR("en", codes[0]);
+    free_codes(codes, n);
 }
 
 /* Vérifie que les codes de langue dépassant huit caractères sont ignorés. */
@@ -101,6 +109,7 @@ TEST(langdir_list_ignores_codes_longer_than_eight_characters) {
     // Then
     ASSERT_EQ_INT(1, n);
     ASSERT_EQ_STR("abcdefgh", codes[0]);
+    free_codes(codes, n);
 }
 
 /* Vérifie que la liste ne dépasse jamais la capacité fournie par l'appelant. */
@@ -117,6 +126,7 @@ TEST(langdir_list_never_returns_more_codes_than_the_limit) {
 
     // Then
     ASSERT_EQ_INT(2, n);
+    free_codes(codes, n);
 }
 
 /* Vérifie qu'un dossier sans fichiers .lang produit une liste vide. */
