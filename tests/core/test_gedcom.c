@@ -283,6 +283,26 @@ TEST(parse_skips_lines_whose_parent_level_is_missing) {
     ASSERT_NULL(root->child->child);
 }
 
+/* Vérifie qu'un sous-niveau reste orphelin après une ligne parent sans tag. */
+TEST(parse_ignores_a_deeper_line_after_a_malformed_parent_line) {
+    // Given
+    const char *dir = fx_tempdir();
+    const char *filename = "stale-parent.ged";
+    fx_write(dir, filename, "0 HEAD\n1\n2 DATE orphan\n");
+    char path[512];
+    snprintf(path, sizeof path, "%s/%s", dir, filename);
+    size_t ignored_lines = 0;
+
+    // When
+    Node *root = gedcom_parse_with_warnings(path, &ignored_lines);
+
+    // Then
+    ASSERT_NOT_NULL(root);
+    ASSERT_NOT_NULL(root->child);
+    ASSERT_NULL(root->child->child);
+    ASSERT_EQ_INT(2, (int)ignored_lines);
+}
+
 /* Vérifie qu'un niveau supérieur à la profondeur prise en charge est ignoré. */
 TEST(parse_skips_levels_beyond_the_supported_depth) {
     // Given
@@ -438,6 +458,7 @@ int main(void) {
     RUN_TEST(parse_preserves_values_longer_than_the_initial_line_buffer);
     RUN_TEST(parse_skips_lines_that_do_not_start_with_a_level);
     RUN_TEST(parse_reports_the_number_of_ignored_lines);
+    RUN_TEST(parse_ignores_a_deeper_line_after_a_malformed_parent_line);
     RUN_TEST(gedcom_free_accepts_a_null_root);
     RUN_TEST(gedcom_free_releases_a_parsed_tree);
     RUN_TEST(parse_skips_a_line_without_a_tag);
