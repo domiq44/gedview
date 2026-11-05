@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=GedView
+Comment=Visionneuse de fichiers GEDCOM
+Exec=@APPDIR@/gedview-open %f
+Terminal=true
+Categories=Utility;Genealogy;
+MimeType=text/vnd.familysearch.gedcom;application/x-gedcom;

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#f2eadc"/>
+  <rect x="40" y="40" width="560" height="280" fill="#fffdf8" stroke="#423a32" stroke-width="4"/>
+  <circle cx="235" cy="150" r="48" fill="#a64b37"/>
+  <circle cx="405" cy="150" r="48" fill="#53786a"/>
+  <path d="M145 285c8-65 45-98 90-98s82 33 90 98M315 285c8-65 45-98 90-98s82 33 90 98" fill="none" stroke="#423a32" stroke-width="12"/>
+  <text x="320" y="310" text-anchor="middle" font-family="serif" font-size="20" fill="#423a32">GEDCOM media test</text>
+</svg>

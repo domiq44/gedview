@@ -1,0 +1,4 @@
+build/
+build-cov/
+build-asan/
+gedview

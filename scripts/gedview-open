@@ -1,0 +1,16 @@
+#!/bin/bash
+# Lance gedview (installé à côté de ce script) ; propose un sélecteur de fichier si aucun argument n'est donné.
+f="$1"
+if [ -z "$f" ]; then
+    if command -v zenity >/dev/null 2>&1; then
+        f=$(zenity --file-selection --title="Choisir un fichier GEDCOM" \
+            --file-filter='GEDCOM | *.ged *.GED' --file-filter='Tous | *') || exit 0
+    elif command -v kdialog >/dev/null 2>&1; then
+        f=$(kdialog --getopenfilename "$HOME" '*.ged *.GED|GEDCOM') || exit 0
+    else
+        echo "Installer zenity ou kdialog, ou passer un fichier en argument." >&2
+        read -r -p "Entrée pour fermer..." _
+        exit 1
+    fi
+fi
+exec "$(dirname "$(readlink -f "$0")")/gedview" "$f"
