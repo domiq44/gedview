@@ -64,11 +64,18 @@ tests/
 
 - Un fichier `tests/<dossier>/test_<module>.c` par module testé : il devient son propre exécutable
   (`build/tests/<dossier>/test_<module>`). Le `Makefile` détecte automatiquement les nouveaux fichiers.
-- `src/ui/screen.c` et `src/ui/help.c` (ncurses), `src/ui/external.c` (lance un programme système) et `src/main.c`
+- `src/ui/screen.c`, `src/ui/treeview.c` et `src/ui/help.c` (ncurses), `src/ui/external.c` (lance un programme
+  système) et `src/main.c`
   ne sont pas testés unitairement. La validation et la résolution des cibles sont isolées dans `external_target.c`
   et testées par `tests/ui/test_external_target.c`; le routage est testé avec `InputHooks`. Garder la résolution
   séparée du lancement des programmes pour qu'elle reste testable.
 - Les tests ne lient pas ncurses.
+- L'arbre d'ascendance : placement et déplacements sont testés dans `view/pedigree`, les actions dans
+  `view/treenav`, les enfants dans `view/family` ; le clic de souris passe par le hook `mouse_pick` de `InputHooks`.
+  Seuls le dessin et le test de zone cliquable de `treeview.c` ne sont pas testés ; garder cette logique de dessin
+  sans règle métier.
+- La mémoire entre sessions : `core/state` et `view/session` sont testés avec `GEDVIEW_STATE_DIR` pointant vers un
+  dossier temporaire ; ne jamais écrire dans le `$HOME` réel.
 - **Couverture** : viser les lignes et branches de logique ; les chemins d'échec d'allocation (`perror` + `exit`) sont
   volontairement non testés. Après un changement, vérifier avec `make coverage` qu'aucune nouvelle ligne de logique
   n'est non couverte.

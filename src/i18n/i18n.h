@@ -48,6 +48,10 @@ enum {
     S_H_BACK,
     S_H_HISTORY,
     S_H_COLOR,
+    S_T_TREE,
+    S_STATUS_TREE,
+    S_H_TREE,
+    S_T_CHILDREN,
     NSTR,
 };
 

@@ -29,7 +29,7 @@ TEST_SUPPORT_SRC = $(wildcard tests/support/*.c)
 TEST_SUPPORT_OBJ = $(TEST_SUPPORT_SRC:tests/%.c=$(BUILD)/tests/%.o)
 TEST_FILES = $(TEST_SRC) $(TEST_SUPPORT_SRC) $(wildcard tests/*/*.h)
 # Sans main ni code qui appelle ncurses : les tests ne lient pas ncurses.
-UNTESTED_SRC = src/main.c src/ui/screen.c src/ui/help.c src/ui/external.c
+UNTESTED_SRC = src/main.c src/ui/screen.c src/ui/treeview.c src/ui/help.c src/ui/external.c
 LIB_OBJ = $(filter-out $(UNTESTED_SRC:src/%.c=$(BUILD)/%.o),$(OBJ))
 TEST_CFLAGS += -Wall -Wextra -O0 -g -Isrc -Itests -MMD -MP
 ifdef SANITIZE

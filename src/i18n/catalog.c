@@ -54,6 +54,10 @@ static const struct {
     [S_H_BACK] = {"H_BACK", 0},
     [S_H_HISTORY] = {"H_HISTORY", 0},
     [S_H_COLOR] = {"H_COLOR", 0},
+    [S_T_TREE] = {"T_TREE", 0},
+    [S_STATUS_TREE] = {"STATUS_TREE", 0},
+    [S_H_TREE] = {"H_TREE", 0},
+    [S_T_CHILDREN] = {"T_CHILDREN", 0},
 };
 
 /* Duplique une valeur de catalogue et termine le processus si l'allocation échoue. */

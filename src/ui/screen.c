@@ -11,8 +11,9 @@
 #include "i18n/i18n.h"
 #include "view/kindview.h"
 #include "view/label.h"
+#include "ui/treeview.h"
 
-static WINDOW *list_win, *detail_win;
+static WINDOW *list_win, *detail_win, *tree_win;
 
 /* Largeur minimale du terminal pour afficher les secondes dans l'horloge. */
 enum { CLOCK_SECONDS_MIN_COLS = 100 };
@@ -44,13 +45,16 @@ void screen_open(void) {
     noecho();
     keypad(stdscr, TRUE);
     curs_set(0);
+    mousemask(BUTTON1_PRESSED, NULL);
+    mouseinterval(0);
 }
 
 /* Détruit les fenêtres auxiliaires et remet leurs pointeurs à NULL. */
 static void delete_windows(void) {
     if (list_win) delwin(list_win);
     if (detail_win) delwin(detail_win);
-    list_win = detail_win = NULL;
+    if (tree_win) delwin(tree_win);
+    list_win = detail_win = tree_win = NULL;
 }
 
 /* Libère les fenêtres puis restaure le terminal à son état normal. */
@@ -97,7 +101,8 @@ static int layout(void) {
     clear();
     list_win = newwin(LINES - 1, COLS / 3, 0, 0);
     detail_win = newwin(LINES - 1, COLS - (COLS / 3), 0, COLS / 3);
-    if (!list_win || !detail_win) {
+    tree_win = newwin(LINES - 1, COLS, 0, 0);
+    if (!list_win || !detail_win || !tree_win) {
         delete_windows();
         erase();
         if (colors_enabled) attron(COLOR_PAIR(SCREEN_PAIR_STATUS) | A_BOLD);
@@ -200,7 +205,7 @@ static void draw_detail(const Nav *nav, const Detail *d) {
 }
 
 /* Dessine l'aide rapide et l'heure dans la barre inférieure. */
-static void draw_status(void) {
+static void draw_status(int tree) {
     char clock[32] = "";
     time_t now = time(NULL);
     const struct tm *tm = localtime(&now);
@@ -211,7 +216,7 @@ static void draw_status(void) {
 
     if (colors_enabled) attron(COLOR_PAIR(SCREEN_PAIR_STATUS) | A_BOLD);
     mvhline(LINES - 1, 0, ' ', COLS);
-    mvaddnstr(LINES - 1, 0, T(S_STATUS), COLS - clock_len);
+    mvaddnstr(LINES - 1, 0, T(tree ? S_STATUS_TREE : S_STATUS), COLS - clock_len);
     if (clock_len) mvaddstr(LINES - 1, COLS - clock_len, clock);
     if (colors_enabled) attroff(COLOR_PAIR(SCREEN_PAIR_STATUS) | A_BOLD);
 }
@@ -219,8 +224,16 @@ static void draw_status(void) {
 /* Met à jour les panneaux et compose leurs fenêtres avec ncurses. */
 void screen_draw(const Database *db, const Nav *nav, const Detail *d) {
     if (invalid && !layout()) return;
-    draw_status();
+    draw_status(nav->tree);
     wnoutrefresh(stdscr); /* avant les fenêtres : après clear(), il les effacerait */
+    if (nav->tree) {
+        werase(tree_win);
+        treeview_draw(tree_win, db, nav);
+        wnoutrefresh(tree_win);
+        if (nav->child_menu) treeview_draw_children(db, nav);
+        doupdate();
+        return;
+    }
     werase(list_win);
     werase(detail_win);
     draw_list(db, nav);

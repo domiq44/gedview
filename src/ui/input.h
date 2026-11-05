@@ -18,6 +18,7 @@ typedef struct {
                           const char *gedcom_path); /* ouvre une URL ou un média autorisé */
     const char *gedcom_path;                        /* chemin utilisé pour résoudre les médias relatifs */
     void (*toggle_colors)(void);                    /* inverse l'affichage couleur si disponible */
+    int (*mouse_pick)(void); /* numéro de la case de l'arbre sous le clic de souris en attente, 0 si aucune */
 } InputHooks;
 
 /* Applique l'action associée à key ; retourne 0 pour demander la fermeture, 1 pour poursuivre. */

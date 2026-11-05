@@ -5,6 +5,7 @@
 #include "support/testlib.h"
 #include "view/detail.h"
 #include "view/nav.h"
+#include "view/pedigree.h"
 
 /* Tests d'intégration : fichier réel -> parsing -> index -> navigation -> détail.
  * Ils s'exécutent depuis la racine du projet (make test). */
@@ -247,9 +248,35 @@ TEST(searching_a_name_of_the_sample_selects_the_matching_individual) {
     ASSERT_EQ_STR("ANSELIN, Marcel", label);
 }
 
+/* Vérifie que l'arbre de chaque individu est cohérent : les cases présentes ont un individu, un libellé et
+   tiennent dans la hauteur de l'arbre, et la racine est celle demandée. */
+TEST(every_ancestor_tree_of_the_sample_is_consistent) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    load_sample(&db);
+
+    for (int i = 0; i < db.lists[K_INDI].count; i++) {
+        const Node *indi = db.lists[K_INDI].items[i];
+        Pedigree p;
+
+        // When
+        pedigree_build(&p, &db, indi);
+
+        // Then
+        ASSERT_TRUE(p.box[1].indi == indi);
+        for (int n = 1; n < PEDIGREE_SLOTS; n++) {
+            if (!p.box[n].indi) continue;
+            ASSERT_TRUE(p.box[n].label[0] != 0);
+            ASSERT_TRUE(pedigree_row(&p, n) >= 0);
+            ASSERT_TRUE(pedigree_row(&p, n) + PEDIGREE_BOX_LINES <= pedigree_lines(&p));
+        }
+    }
+}
+
 /* Enregistre les parcours réels du fichier d'exemple et retourne leur bilan. */
 int main(void) {
     tl_suite("integration/sample");
+    RUN_TEST(every_ancestor_tree_of_the_sample_is_consistent);
     RUN_TEST(sample_file_contains_records_for_every_view);
     RUN_TEST(every_record_of_the_sample_has_a_non_empty_label);
     RUN_TEST(every_record_of_the_sample_can_be_rendered_in_the_detail_panel);

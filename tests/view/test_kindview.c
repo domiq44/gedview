@@ -82,6 +82,49 @@ TEST(kind_title_id_gives_each_kind_its_own_title) {
     }
 }
 
+/* Vérifie que chaque slot retrouve le type dont il provient. */
+TEST(kind_slot_round_trips_through_kind_from_slot) {
+    // Given
+    const Kind kinds[] = {K_INDI, K_FAM, K_SRC, K_REPO, K_OBJ, K_NOTE};
+    const char *slots[] = {"INDI", "FAM", "SOUR", "REPO", "OBJE", "NOTE"};
+
+    for (int i = 0; i < 6; i++) {
+        // When
+        const char *slot = kind_slot(kinds[i]);
+        int kind = kind_from_slot(slot);
+
+        // Then
+        ASSERT_EQ_STR(slots[i], slot);
+        ASSERT_EQ_INT(kinds[i], kind);
+    }
+}
+
+/* Vérifie que les citations n'ont pas de slot. */
+TEST(kind_slot_is_null_for_citations) {
+    // Given
+    const Kind kind = K_CITA;
+
+    // When
+    const char *slot = kind_slot(kind);
+
+    // Then
+    ASSERT_NULL(slot);
+}
+
+/* Vérifie qu'un nom de slot inconnu produit le code -1. */
+TEST(kind_from_slot_returns_minus_one_for_an_unknown_slot) {
+    // Given
+    const char *slots[] = {"", "indi", "CITA", "VIEW"};
+
+    for (int i = 0; i < 4; i++) {
+        // When
+        int kind = kind_from_slot(slots[i]);
+
+        // Then
+        ASSERT_EQ_INT(-1, kind);
+    }
+}
+
 /* Enregistre les scénarios de correspondance des vues et retourne leur bilan. */
 int main(void) {
     tl_suite("view/kindview");
@@ -91,5 +134,8 @@ int main(void) {
     RUN_TEST(kind_from_key_returns_minus_one_for_special_keys_beyond_ascii);
     RUN_TEST(kind_from_key_returns_minus_one_for_a_negative_key);
     RUN_TEST(kind_title_id_gives_each_kind_its_own_title);
+    RUN_TEST(kind_slot_round_trips_through_kind_from_slot);
+    RUN_TEST(kind_slot_is_null_for_citations);
+    RUN_TEST(kind_from_slot_returns_minus_one_for_an_unknown_slot);
     return tl_finish();
 }

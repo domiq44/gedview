@@ -933,9 +933,267 @@ TEST(nav_scroll_resets_the_detail_selection_when_there_are_no_lines) {
     ASSERT_EQ_INT(0, nav.det_sel);
 }
 
+/* --- nav_select_individual --- */
+
+/* Vérifie que l'individu ciblé est sélectionné et que l'ancienne position entre dans l'historique. */
+TEST(nav_select_individual_selects_the_target_and_records_history) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.det_sel = 3;
+    nav.det_top = 2;
+
+    // When
+    nav_select_individual(&nav, &db, db_find(&db, "@I3@"));
+
+    // Then
+    ASSERT_EQ_INT(2, nav.sel);
+    ASSERT_EQ_STR("@I3@", nav_current(&nav, &db)->xref);
+    ASSERT_EQ_INT(1, (int)nav.history_count);
+    ASSERT_EQ_INT(0, nav.det_sel);
+    ASSERT_EQ_INT(0, nav.det_top);
+}
+
+/* Vérifie que sélectionner l'individu déjà sélectionné n'ajoute rien à l'historique. */
+TEST(nav_select_individual_does_not_record_history_when_the_selection_is_unchanged) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+
+    // When
+    nav_select_individual(&nav, &db, db_find(&db, "@I2@"));
+
+    // Then
+    ASSERT_EQ_INT(1, nav.sel);
+    ASSERT_EQ_INT(0, (int)nav.history_count);
+}
+
+/* Vérifie qu'un enregistrement qui n'est pas un individu laisse la sélection inchangée. */
+TEST(nav_select_individual_ignores_a_node_that_is_not_an_individual) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+
+    // When
+    nav_select_individual(&nav, &db, db_find(&db, "@F1@"));
+
+    // Then
+    ASSERT_EQ_INT(1, nav.sel);
+    ASSERT_EQ_INT(0, (int)nav.history_count);
+}
+
+/* Vérifie qu'un enregistrement inconnu (NULL) laisse la sélection inchangée. */
+TEST(nav_select_individual_ignores_an_unknown_node) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+
+    // When
+    nav_select_individual(&nav, &db, db_find(&db, "@I9@"));
+
+    // Then
+    ASSERT_EQ_INT(1, nav.sel);
+    ASSERT_EQ_INT(0, (int)nav.history_count);
+}
+
+/* --- nav_record --- */
+
+/* Vérifie que pour la vue active nav_record retourne l'enregistrement sélectionné. */
+TEST(nav_record_uses_the_selection_for_the_current_kind) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+
+    // When
+    const Node *rec = nav_record(&nav, &db, K_INDI);
+
+    // Then
+    ASSERT_EQ_STR("@I2@", rec->xref);
+}
+
+/* Vérifie que pour une liste inactive nav_record utilise la sélection mémorisée. */
+TEST(nav_record_uses_the_saved_selection_for_an_inactive_kind) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 2;
+    nav_set_kind(&nav, K_FAM);
+
+    // When
+    const Node *rec = nav_record(&nav, &db, K_INDI);
+
+    // Then
+    ASSERT_EQ_STR("@I3@", rec->xref);
+}
+
+/* Vérifie que nav_record retourne NULL pour une liste vide. */
+TEST(nav_record_returns_null_for_an_empty_list) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+
+    // When
+    const Node *rec = nav_record(&nav, &db, K_NOTE);
+
+    // Then
+    ASSERT_NULL(rec);
+}
+
+/* Vérifie qu'une sélection hors limites est ramenée au dernier enregistrement. */
+TEST(nav_record_clamps_an_out_of_range_selection) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 99;
+
+    // When
+    const Node *rec = nav_record(&nav, &db, K_INDI);
+
+    // Then
+    ASSERT_EQ_STR("@I3@", rec->xref);
+}
+
+/* --- nav_restore_record --- */
+
+/* Vérifie que la restauration dans la vue active sélectionne l'enregistrement sans historique. */
+TEST(nav_restore_record_selects_the_record_in_the_current_kind) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+
+    // When
+    int found = nav_restore_record(&nav, &db, K_INDI, "@I3@");
+
+    // Then
+    ASSERT_EQ_INT(1, found);
+    ASSERT_EQ_INT(2, nav.sel);
+    ASSERT_EQ_INT(0, (int)nav.history_count);
+}
+
+/* Vérifie que la restauration dans une liste inactive met à jour sa sélection mémorisée sans changer de vue.
+ */
+TEST(nav_restore_record_updates_the_saved_selection_of_an_inactive_kind) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav_set_kind(&nav, K_FAM);
+
+    // When
+    int found = nav_restore_record(&nav, &db, K_INDI, "@I2@");
+
+    // Then
+    ASSERT_EQ_INT(1, found);
+    ASSERT_EQ_INT(K_FAM, nav.kind);
+    ASSERT_EQ_STR("@I2@", nav_record(&nav, &db, K_INDI)->xref);
+}
+
+/* Vérifie qu'un XREF inconnu retourne 0 et laisse la sélection inchangée. */
+TEST(nav_restore_record_returns_zero_for_an_unknown_xref) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+
+    // When
+    int found = nav_restore_record(&nav, &db, K_INDI, "@I9@");
+
+    // Then
+    ASSERT_EQ_INT(0, found);
+    ASSERT_EQ_INT(1, nav.sel);
+}
+
+/* Vérifie qu'un XREF appartenant à un autre type retourne 0 et laisse la sélection inchangée. */
+TEST(nav_restore_record_returns_zero_for_an_xref_of_another_kind) {
+    // Given
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(TREE, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.sel = 1;
+
+    // When
+    int found = nav_restore_record(&nav, &db, K_INDI, "@F1@");
+
+    // Then
+    ASSERT_EQ_INT(0, found);
+    ASSERT_EQ_INT(1, nav.sel);
+}
+
+/* --- nav_restore_view --- */
+
+/* Vérifie que nav_restore_view affiche la liste demandée sans toucher à l'historique. */
+TEST(nav_restore_view_switches_the_list_without_history) {
+    // Given
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+
+    // When
+    nav_restore_view(&nav, K_SRC);
+
+    // Then
+    ASSERT_EQ_INT(K_SRC, nav.kind);
+    ASSERT_EQ_INT(0, (int)nav.history_count);
+}
+
+/* Vérifie que nav_restore_view referme l'arbre et la liste des enfants. */
+TEST(nav_restore_view_closes_the_tree_and_the_child_menu) {
+    // Given
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    nav.tree = 1;
+    nav.child_menu = 1;
+
+    // When
+    nav_restore_view(&nav, K_FAM);
+
+    // Then
+    ASSERT_EQ_INT(0, nav.tree);
+    ASSERT_EQ_INT(0, nav.child_menu);
+}
+
 /* Enregistre les scénarios d'état, historique et recherche puis retourne leur bilan. */
 int main(void) {
     tl_suite("view/nav");
+    RUN_TEST(nav_select_individual_selects_the_target_and_records_history);
+    RUN_TEST(nav_select_individual_does_not_record_history_when_the_selection_is_unchanged);
+    RUN_TEST(nav_select_individual_ignores_a_node_that_is_not_an_individual);
+    RUN_TEST(nav_select_individual_ignores_an_unknown_node);
+    RUN_TEST(nav_record_uses_the_selection_for_the_current_kind);
+    RUN_TEST(nav_record_uses_the_saved_selection_for_an_inactive_kind);
+    RUN_TEST(nav_record_returns_null_for_an_empty_list);
+    RUN_TEST(nav_record_clamps_an_out_of_range_selection);
+    RUN_TEST(nav_restore_record_selects_the_record_in_the_current_kind);
+    RUN_TEST(nav_restore_record_updates_the_saved_selection_of_an_inactive_kind);
+    RUN_TEST(nav_restore_record_returns_zero_for_an_unknown_xref);
+    RUN_TEST(nav_restore_record_returns_zero_for_an_xref_of_another_kind);
+    RUN_TEST(nav_restore_view_switches_the_list_without_history);
+    RUN_TEST(nav_restore_view_closes_the_tree_and_the_child_menu);
     RUN_TEST(nav_init_starts_on_the_individuals_list_at_the_top);
     RUN_TEST(nav_count_is_the_size_of_the_displayed_list);
     RUN_TEST(nav_current_returns_the_selected_record);

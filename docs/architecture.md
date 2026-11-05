@@ -36,6 +36,7 @@ src/
         records.c/h    types d'enregistrements et libellés
         database.c/h   listes d'enregistrements et index XREF trié
         version.c/h    version du programme (injectée par le Makefile depuis Git)
+        state.c/h      mémoire entre sessions : valeurs nommées par fichier GEDCOM (fichier d'état XDG)
     i18n/            traductions
         i18n.c/h       langue courante, accès aux textes (repli sur l'anglais)
         catalog.c/h    lecture et validation des fichiers .lang
@@ -44,9 +45,14 @@ src/
         detail.c/h     construction des lignes de détail
         nav.c/h        état de navigation (vue, sélection, défilement, recherche, liens)
         label.c/h      libellés affichables (texte de remplacement traduit)
-        kindview.c/h   touche et titre de chaque type de liste
+        kindview.c/h   touche, titre et slot de mémorisation de chaque type de liste
+        pedigree.c/h   arbre d'ascendance (cases numérotées 1, 2n, 2n+1), disposition et déplacements
+        family.c/h     résumé d'un individu (libellé, dates) et liste de ses enfants
+        treenav.c/h    actions de l'arbre sur Nav : ouverture, sélection, recentrage, liste des enfants
+        session.c/h    reprise de la dernière session (vue et sélection de chaque liste) via core/state
     ui/              seul code qui utilise ncurses
-        screen.c/h     fenêtres, dessin, saisie de texte (ncurses)
+        screen.c/h     fenêtres, dessin des listes et du détail, barre d'état, saisie de texte (ncurses)
+        treeview.c/h   dessin de l'arbre, connecteurs, liste des enfants et clic de souris (ncurses)
         help.c/h       page d'aide (ncurses)
         input.c/h      touches -> actions ; les actions d'interface sont injectées (`InputHooks`), donc testable
         external.c/h   lancement sans shell de xdg-open
@@ -96,6 +102,10 @@ sequenceDiagram
 ```
 
 Le panneau de détail est reconstruit après chaque action. La navigation suit les liens XREF entre enregistrements et garde un historique pour le retour arrière.
+
+L'arbre d'ascendance (touche `t`) est un mode de la vue Individus porté par `Nav` (`tree`, `tree_sel`) : `pedigree.c` construit à la demande la grille des ancêtres de l'individu courant (premier `FAMC`, profondeur limitée à `PEDIGREE_MAX_GENS`, ce qui borne aussi les cycles) et résout les déplacements ; `treenav.c` applique les actions à `Nav` ; `treeview.c` dessine l'arbre, centré, avec ses connecteurs et enregistre les zones cliquables. Un clic de souris est traduit en numéro de case par le hook `mouse_pick` de `InputHooks`, puis `treenav_recenter` sélectionne l'ancêtre dans la liste et l'ajoute à l'historique. « ← » sur la personne centrale ouvre la liste de ses enfants (`family.c`) ; `Entrée` choisit l'enfant.
+
+Au démarrage, `session_restore` relit la vue et la sélection de chaque liste (hors citations, sans XREF) pour le fichier ouvert ; `session_save` les écrit à la fermeture. `core/state.c` stocke des lignes `slot<tab>valeur<tab>chemin canonique` dans `$GEDVIEW_STATE_DIR`, sinon `$XDG_STATE_HOME/gedview`, sinon `~/.local/state/gedview` (fichier `last-person`).
 
 ## Données et propriété mémoire
 

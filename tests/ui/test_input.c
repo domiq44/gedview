@@ -45,8 +45,13 @@ static void fake_open_external(const char *target, LineLinkKind kind, const char
 /* Compte les demandes de bascule des couleurs. */
 static void fake_toggle_colors(void) { color_toggle_calls++; }
 
+/* Simule un clic sur la case d'arbre configurée. */
+static int picked_box;
+static int fake_mouse_pick(void) { return picked_box; }
+
 static const InputHooks HOOKS = {
-    fake_page_size, fake_prompt, fake_help, fake_open_external, "gedcom-test.ged", fake_toggle_colors,
+    fake_page_size,    fake_prompt,        fake_help,       fake_open_external,
+    "gedcom-test.ged", fake_toggle_colors, fake_mouse_pick,
 };
 
 /* Envoie key au routeur avec les hooks simulés partagés par les scénarios. */
@@ -63,6 +68,7 @@ static void reset_doubles(void) {
     opened_gedcom_path = NULL;
     opened_kind = LINE_LINK_RECORD;
     color_toggle_calls = 0;
+    picked_box = 0;
 }
 
 /* Vérifie que les touches q et Q demandent l'arrêt de la boucle principale. */
@@ -450,9 +456,272 @@ TEST(input_language_key_switches_to_the_next_language) {
     ASSERT_EQ_STR("Sans nom", T(S_NONAME));
 }
 
+/* Alice (I1) a pour père Bob (I2) et pour mère Carol (I3). */
+static const char *ANCESTRY = "0 @I1@ INDI\n1 NAME Alice/ALPHA/\n1 FAMC @F1@\n"
+                              "0 @I2@ INDI\n1 NAME Bob/BRAVO/\n"
+                              "0 @I3@ INDI\n1 NAME Carol/CHARLIE/\n"
+                              "0 @F1@ FAM\n1 HUSB @I2@\n1 WIFE @I3@\n1 CHIL @I1@\n";
+
+/* Vérifie que la touche t ouvre l'arbre et qu'une seconde pression le ferme. */
+TEST(input_t_key_toggles_the_ancestor_tree) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+
+    // When
+    press('t', &db, &nav, &d);
+    int opened = nav.tree;
+    press('t', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(1, opened);
+    ASSERT_EQ_INT(0, nav.tree);
+}
+
+/* Vérifie que flèche droite puis Entrée recentrent l'arbre sur le père. */
+TEST(input_tree_right_then_enter_recenters_on_the_father) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+
+    // When
+    press(KEY_RIGHT, &db, &nav, &d);
+    press('\n', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_STR("@I2@", nav_current(&nav, &db)->xref);
+}
+
+/* Vérifie que les flèches gauche, haut et bas déplacent la sélection de l'arbre. */
+TEST(input_tree_arrows_move_the_selection_between_boxes) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+    press(KEY_RIGHT, &db, &nav, &d);
+
+    // When
+    press(KEY_DOWN, &db, &nav, &d);
+    int mother = nav.tree_sel;
+    press('k', &db, &nav, &d);
+    int father = nav.tree_sel;
+    press('j', &db, &nav, &d);
+    press(KEY_UP, &db, &nav, &d);
+    press(KEY_LEFT, &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(3, mother);
+    ASSERT_EQ_INT(2, father);
+    ASSERT_EQ_INT(1, nav.tree_sel);
+}
+
+/* Vérifie qu'un clic sur une case de l'arbre en fait l'individu courant. */
+TEST(input_tree_mouse_click_recenters_on_the_clicked_box) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+    picked_box = 3;
+
+    // When
+    press(KEY_MOUSE, &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_STR("@I3@", nav_current(&nav, &db)->xref);
+}
+
+/* Vérifie qu'un clic hors de toute case ne change pas l'individu courant. */
+TEST(input_tree_mouse_click_outside_a_box_changes_nothing) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+
+    // When
+    press(KEY_MOUSE, &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_STR("@I1@", nav_current(&nav, &db)->xref);
+}
+
+/* Vérifie que les déplacements de liste sont sans effet pendant l'affichage de l'arbre. */
+TEST(input_tree_ignores_list_navigation_keys) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+    const int keys[] = {KEY_NPAGE, KEY_END, '\t', '/'};
+
+    for (int i = 0; i < 4; i++) {
+        // When
+        press(keys[i], &db, &nav, &d);
+
+        // Then
+        ASSERT_EQ_INT(0, nav.sel);
+        ASSERT_EQ_INT(0, nav.focus_detail);
+    }
+}
+
+/* Vérifie qu'une touche de vue ferme l'arbre et affiche la liste demandée. */
+TEST(input_view_key_closes_the_tree) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(ANCESTRY, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+
+    // When
+    press('f', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(0, nav.tree);
+    ASSERT_EQ_INT(K_FAM, nav.kind);
+}
+
+/* Alice (I1) a deux enfants : Bob (I2) et Carol (I3). */
+static const char *CHILDREN = "0 @I1@ INDI\n1 NAME Alice/ALPHA/\n1 FAMS @F1@\n"
+                              "0 @I2@ INDI\n1 NAME Bob/BRAVO/\n1 FAMC @F1@\n"
+                              "0 @I3@ INDI\n1 NAME Carol/CHARLIE/\n1 FAMC @F1@\n"
+                              "0 @F1@ FAM\n1 HUSB @I1@\n1 CHIL @I2@\n1 CHIL @I3@\n";
+
+/* Vérifie que ← sur la personne centrale ouvre la liste des enfants, puis que ↓ et Entrée choisissent le
+ * second. */
+TEST(input_tree_left_on_the_root_lets_the_user_pick_a_child) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(CHILDREN, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+
+    // When
+    press(KEY_LEFT, &db, &nav, &d);
+    int opened = nav.child_menu;
+    press(KEY_DOWN, &db, &nav, &d);
+    press('\n', &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(1, opened);
+    ASSERT_EQ_INT(0, nav.child_menu);
+    ASSERT_EQ_STR("@I3@", nav_current(&nav, &db)->xref);
+}
+
+/* Vérifie que k et ↑ remontent dans la liste des enfants. */
+TEST(input_children_list_up_keys_move_back_up) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(CHILDREN, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+    press(KEY_LEFT, &db, &nav, &d);
+    press('j', &db, &nav, &d);
+    int down = nav.child_sel;
+
+    // When
+    press('k', &db, &nav, &d);
+    int after_k = nav.child_sel;
+    press('j', &db, &nav, &d);
+    press(KEY_UP, &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(1, down);
+    ASSERT_EQ_INT(0, after_k);
+    ASSERT_EQ_INT(0, nav.child_sel);
+}
+
+/* Vérifie que Échap et → ferment la liste des enfants sans changer d'individu. */
+TEST(input_children_list_closes_on_escape_or_right_arrow) {
+    // Given
+    reset_doubles();
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(CHILDREN, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    const int keys[] = {27, KEY_RIGHT};
+    press('t', &db, &nav, &d);
+
+    for (int i = 0; i < 2; i++) {
+        press(KEY_LEFT, &db, &nav, &d);
+
+        // When
+        press(keys[i], &db, &nav, &d);
+
+        // Then
+        ASSERT_EQ_INT(0, nav.child_menu);
+        ASSERT_EQ_STR("@I1@", nav_current(&nav, &db)->xref);
+    }
+}
+
+/* Vérifie que ← et la souris sont sans effet pendant que la liste des enfants est ouverte. */
+TEST(input_children_list_ignores_left_arrow_and_mouse) {
+    // Given
+    reset_doubles();
+    picked_box = 1;
+    Database db TL_AUTOCLEAN(db_destroy);
+    fx_database(CHILDREN, &db);
+    Nav nav TL_AUTOCLEAN(nav_destroy);
+    nav_init(&nav);
+    Detail d = {0};
+    press('t', &db, &nav, &d);
+    press(KEY_LEFT, &db, &nav, &d);
+
+    // When
+    press(KEY_LEFT, &db, &nav, &d);
+    press(KEY_MOUSE, &db, &nav, &d);
+
+    // Then
+    ASSERT_EQ_INT(1, nav.child_menu);
+    ASSERT_EQ_INT(0, nav.child_sel);
+}
+
 /* Enregistre les scénarios de saisie et retourne leur bilan au processus appelant. */
 int main(void) {
     tl_suite("ui/input");
+    RUN_TEST(input_tree_left_on_the_root_lets_the_user_pick_a_child);
+    RUN_TEST(input_children_list_up_keys_move_back_up);
+    RUN_TEST(input_children_list_closes_on_escape_or_right_arrow);
+    RUN_TEST(input_children_list_ignores_left_arrow_and_mouse);
+    RUN_TEST(input_t_key_toggles_the_ancestor_tree);
+    RUN_TEST(input_tree_right_then_enter_recenters_on_the_father);
+    RUN_TEST(input_tree_arrows_move_the_selection_between_boxes);
+    RUN_TEST(input_tree_mouse_click_recenters_on_the_clicked_box);
+    RUN_TEST(input_tree_mouse_click_outside_a_box_changes_nothing);
+    RUN_TEST(input_tree_ignores_list_navigation_keys);
+    RUN_TEST(input_view_key_closes_the_tree);
     RUN_TEST(input_quit_keys_ask_the_program_to_stop);
     RUN_TEST(input_unknown_key_changes_nothing_and_keeps_running);
     RUN_TEST(input_view_key_switches_to_the_matching_list);

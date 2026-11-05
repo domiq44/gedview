@@ -10,8 +10,10 @@
 #include "ui/help.h"
 #include "ui/input.h"
 #include "ui/screen.h"
+#include "ui/treeview.h"
 #include "view/detail.h"
 #include "view/nav.h"
+#include "view/session.h"
 
 /* Valide les arguments puis orchestre la durée de vie complète d'une session GedView. */
 int main(int argc, char **argv) {
@@ -48,9 +50,11 @@ int main(int argc, char **argv) {
 
     Nav nav;
     nav_init(&nav);
+    session_restore(&nav, &db, gedcom_path);
     Detail detail = {0};
     const InputHooks hooks = {
-        screen_page_size, screen_prompt, help_show, external_open, gedcom_path, screen_toggle_colors,
+        screen_page_size, screen_prompt,        help_show,     external_open,
+        gedcom_path,      screen_toggle_colors, treeview_pick,
     };
 
     screen_open();
@@ -70,6 +74,7 @@ int main(int argc, char **argv) {
         screen_draw(&db, &nav, &detail);
     } while (input_handle_key(screen_getkey(), &db, &nav, &detail, &hooks));
     screen_close();
+    session_save(&nav, &db, gedcom_path);
     nav_destroy(&nav);
     detail_destroy(&detail);
     db_destroy(&db);

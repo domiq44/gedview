@@ -50,15 +50,66 @@ static void switch_kind(Nav *nav, Kind kind) {
     nav->det_sel = nav->det_top = 0;
 }
 
+/* Retourne l'enregistrement sélectionné dans la liste de kind, la position des listes inactives étant
+ * sauvegardée. */
+const Node *nav_record(const Nav *nav, const Database *db, Kind kind) {
+    int n = db->lists[kind].count;
+    if (!n) return NULL;
+    int index = kind == nav->kind ? nav->sel : nav->saved_sel[kind];
+    if (index >= n) index = n - 1;
+    if (index < 0) index = 0;
+    return db->lists[kind].items[index];
+}
+
+/* Retrouve xref dans la liste de kind et en fait la sélection de cette liste. */
+int nav_restore_record(Nav *nav, const Database *db, Kind kind, const char *xref) {
+    const Node *target = db_find(db, xref);
+    const RecordList *list = &db->lists[kind];
+    for (int i = 0; target && i < list->count; i++) {
+        if (list->items[i] != target) continue;
+        if (kind == nav->kind) {
+            nav->sel = i;
+            nav->det_sel = nav->det_top = 0;
+        } else {
+            nav->saved_sel[kind] = i;
+            nav->saved_top[kind] = 0;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/* Affiche la liste de kind sans modifier l'historique. */
+void nav_restore_view(Nav *nav, Kind kind) {
+    switch_kind(nav, kind);
+    nav->focus_detail = 0;
+    nav->tree = 0;
+    nav->child_menu = 0;
+}
+
 /* Ajoute l'état à l'historique si nécessaire, active kind et rend le focus à la liste. */
 void nav_set_kind(Nav *nav, Kind kind) {
     if (kind != nav->kind) history_push(nav);
     switch_kind(nav, kind);
     nav->focus_detail = 0;
+    nav->tree = 0;
+    nav->child_menu = 0;
 }
 
 /* Bascule le focus clavier entre la liste et le détail. */
 void nav_toggle_focus(Nav *nav) { nav->focus_detail = !nav->focus_detail; }
+
+/* Sélectionne target dans la liste des individus ; l'historique n'est alimenté que si la sélection change. */
+void nav_select_individual(Nav *nav, const Database *db, const Node *target) {
+    const RecordList *list = &db->lists[K_INDI];
+    for (int i = 0; i < list->count; i++) {
+        if (list->items[i] != target) continue;
+        if (i != nav->sel) history_push(nav);
+        nav->sel = i;
+        nav->det_sel = nav->det_top = 0;
+        return;
+    }
+}
 
 /* Déplace la sélection active, la borne à la vue courante et mémorise les déplacements de liste. */
 void nav_move(Nav *nav, const Database *db, const Detail *d, int delta) {
@@ -152,6 +203,9 @@ void nav_back(Nav *nav) {
     nav->det_sel = previous.det_sel;
     nav->det_top = previous.det_top;
     nav->focus_detail = previous.focus_detail;
+    nav->tree_sel = 1;
+    if (nav->kind != K_INDI) nav->tree = 0;
+    nav->child_menu = 0;
 }
 
 /* Recherche needle dans text sans casse, en Unicode si les deux chaînes sont convertibles. */

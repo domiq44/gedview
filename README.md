@@ -21,6 +21,11 @@ Recherche par dépôt dans la vue Sources : `/` puis `Archives Municipales` (voi
 
 ![Vue Citations](media/screenshots/citations.png)
 
+![Arbre d'ascendance horizontal centré sur Noémie Quidouble](media/screenshots/arbre.png)
+
+Arbre d'ascendance (touche `t`) : libellé et dates `° naissance - + décès` de chaque ancêtre ; `←` `→` `↑` `↓`
+pour se déplacer, `Entrée` ou un clic pour recentrer l'arbre sur la case choisie (voir [Touches](#touches)).
+
 ![Aide intégrée](media/screenshots/aide.png)
 
 ## Fonctionnalités
@@ -28,6 +33,10 @@ Recherche par dépôt dans la vue Sources : `/` puis `Archives Municipales` (voi
 - Listes des individus, familles, sources, dépôts, objets multimédia et notes.
 - Toutes les vues sont triées par libellé.
 - Noms d'individus affichés sous la forme `Nom, Prénom` lorsque le nom GEDCOM délimite le patronyme par des barres.
+- Arbre d'ascendance horizontal centré (touche `t`) : libellé et dates `° naissance - + décès` de chaque ancêtre,
+  navigable au clavier et à la souris ; un clic ou `Entrée` fait de l'ancêtre l'individu sélectionné.
+- Reprise de la dernière session par fichier GEDCOM : vue affichée et sélection de chaque liste (individus, familles,
+  sources, dépôts, médias, notes), mémorisées dans `$XDG_STATE_HOME/gedview/` (par défaut `~/.local/state/gedview/`).
 - Vue des citations GEDCOM (`SOUR` imbriqués avec XREF), distincte des enregistrements Source.
 - Panneau de détail avec liens cliquables entre enregistrements (conjoints, enfants, sources, dépôts...).
 - Ouverture avec `xdg-open` des URL HTTP(S) dans les notes et des PDF/images référencés par les objets multimédia.
@@ -92,6 +101,10 @@ s'il est présent.
 | `Tab` | passer de la liste au détail |
 | `Entrée` | (liste) ouvrir le détail ; (détail) suivre le lien souligné ou ouvrir une URL/un média |
 | `Backspace` | revenir à l'étape de navigation précédente (lien, sélection ou vue) |
+| `t` | (vue Individus) afficher/masquer l'arbre d'ascendance horizontal de l'individu courant |
+| arbre : `←` `→` `↑` `↓` ou `k` `j` | aller à l'enfant, au parent (père d'abord), à la case précédente/suivante de la génération |
+| arbre : `Entrée` ou clic gauche | recentrer l'arbre sur la case choisie, qui devient l'individu sélectionné (`Backspace` revient en arrière) |
+| arbre : `←` sur la personne centrale | liste de ses enfants (`↑` `↓`, `Entrée` pour choisir, `Échap` ou `→` pour annuler) |
 | `/` | rechercher dans la liste (`Entrée` valide, `Échap` annule) ; le texte est cherché dans le libellé ou l'XREF, sans tenir compte de la casse. Pour un XREF exact, inclure les `@` : `@S2@` trouve `S2` mais pas `S20`. Dans les vues Source et Citation, le XREF (`@R3@`) ou le nom du dépôt de la source est aussi cherché |
 | `F3` ou `g` | résultat suivant pour la dernière recherche (`g` si F3 est interceptée, par exemple dans VS Code) |
 | `l` | changer de langue |

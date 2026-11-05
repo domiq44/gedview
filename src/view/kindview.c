@@ -2,6 +2,7 @@
 #include "kindview.h"
 
 #include <ctype.h>
+#include <string.h>
 
 #include "i18n/i18n.h"
 
@@ -21,5 +22,21 @@ int kind_title_id(Kind kind) { return VIEWS[kind].title_id; }
 int kind_from_key(int ch) {
     for (int k = 0; k < K_COUNT; k++)
         if (ch >= 0 && ch < 256 && tolower(ch) == VIEWS[k].key) return k;
+    return -1;
+}
+
+/* Les citations n'ont pas de XREF propre : leur s\u00e9lection n'est pas m\u00e9moris\u00e9e. */
+static const char *const SLOTS[K_COUNT] = {
+    [K_INDI] = "INDI", [K_FAM] = "FAM",  [K_SRC] = "SOUR",
+    [K_REPO] = "REPO", [K_OBJ] = "OBJE", [K_NOTE] = "NOTE",
+};
+
+/* Retourne le slot de kind, ou NULL pour les citations. */
+const char *kind_slot(Kind kind) { return SLOTS[kind]; }
+
+/* Cherche le type dont le slot est identique \u00e0 slot. */
+int kind_from_slot(const char *slot) {
+    for (int k = 0; k < K_COUNT; k++)
+        if (SLOTS[k] && !strcmp(SLOTS[k], slot)) return k;
     return -1;
 }
